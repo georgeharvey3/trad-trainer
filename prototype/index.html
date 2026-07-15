@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14181b">
+<title>Trad Trainer</title>
+<style>
+  :root {
+    --bg: #14181b;
+    --surface: #1e2428;
+    --surface-2: #262e33;
+    --border: #333d43;
+    --text: #e8e4da;
+    --muted: #9aa5aa;
+    --accent: #4cb974;
+    --accent-dim: #2d7048;
+    --amber: #e8a13c;
+    --red: #d95c4a;
+    --orange: #dd8b3d;
+    --green: #4cb974;
+    --blue: #5b9bd5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+  header {
+    padding: 14px 18px 10px; display: flex; align-items: baseline; gap: 10px;
+  }
+  header h1 { font-size: 19px; font-weight: 700; letter-spacing: .3px; }
+  header h1 .fiddle { margin-right: 6px; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  main { flex: 1; overflow-y: auto; padding: 0 14px 90px; }
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; background: var(--surface); border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; background: none; border: none; color: var(--muted);
+    padding: 12px 0 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  nav button.active { color: var(--accent); }
+  nav button .ico { display: block; font-size: 18px; margin-bottom: 2px; }
+
+  .stats {
+    display: flex; gap: 8px; margin: 6px 0 14px;
+  }
+  .stat {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 8px; text-align: center;
+  }
+  .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 16px; text-align: center;
+  }
+  .card .type-chip {
+    display: inline-block; font-size: 12px; font-weight: 600; color: var(--amber);
+    border: 1px solid var(--amber); border-radius: 99px; padding: 3px 12px; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 26px; line-height: 1.2; margin-bottom: 4px; }
+  .card .meter-note { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+
+  .tempo-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 10px 0 4px; }
+  .tempo-row .bpm { font-size: 52px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 130px; }
+  .tempo-row .bpm small { font-size: 14px; font-weight: 500; color: var(--muted); display: block; margin-top: -6px; }
+  .round-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-size: 22px; cursor: pointer;
+  }
+  .round-btn:active { background: var(--border); }
+
+  .beats { display: flex; justify-content: center; gap: 10px; margin: 14px 0; min-height: 14px; }
+  .beats .dot {
+    width: 12px; height: 12px; border-radius: 50%; background: var(--surface-2);
+    border: 1px solid var(--border); transition: transform .05s, background .05s;
+  }
+  .beats .dot.on { background: var(--accent); transform: scale(1.45); border-color: var(--accent); }
+  .beats .dot.on.accent { background: var(--amber); border-color: var(--amber); }
+
+  .play-btn {
+    width: 76px; height: 76px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--accent); color: #10241a; font-size: 30px; margin: 6px 0 4px;
+  }
+  .play-btn.playing { background: var(--amber); }
+  .play-btn:active { filter: brightness(1.1); }
+
+  .grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+  .grades button {
+    border: none; border-radius: 10px; padding: 12px 2px 9px; cursor: pointer;
+    color: #fff; font-size: 15px; font-weight: 700;
+  }
+  .grades button small { display: block; font-weight: 500; font-size: 10.5px; opacity: .85; margin-top: 3px; }
+  .g-again { background: var(--red); }
+  .g-hard  { background: var(--orange); }
+  .g-good  { background: var(--green); }
+  .g-easy  { background: var(--blue); }
+  .grades button:active { filter: brightness(1.12); }
+
+  .big-btn {
+    display: block; width: 100%; border: none; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: #10241a; font-size: 17px; font-weight: 700; padding: 16px;
+    margin-top: 14px;
+  }
+  .big-btn.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .done-msg { text-align: center; padding: 40px 10px; color: var(--muted); }
+  .done-msg .big { font-size: 40px; margin-bottom: 12px; }
+  .done-msg h3 { color: var(--text); margin-bottom: 6px; }
+
+  /* Tunes tab */
+  .toolbar { display: flex; gap: 8px; margin: 6px 0 12px; }
+  .toolbar input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); padding: 11px 13px; font-size: 15px;
+  }
+  .toolbar button {
+    background: var(--accent); border: none; border-radius: 10px; color: #10241a;
+    font-size: 15px; font-weight: 700; padding: 0 16px; cursor: pointer;
+  }
+  .tune-count { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .tune-row {
+    display: flex; align-items: center; gap: 10px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 7px;
+    cursor: pointer;
+  }
+  .tune-row .t-main { flex: 1; min-width: 0; }
+  .tune-row .t-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tune-row .t-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tune-row .t-right { text-align: right; font-variant-numeric: tabular-nums; }
+  .tune-row .t-bpm { font-size: 15px; font-weight: 700; }
+  .tune-row .t-due { font-size: 11px; color: var(--muted); }
+  .tune-row .t-due.due-now { color: var(--amber); }
+
+  /* Settings */
+  .set-group { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .set-group h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; }
+  .set-row label { font-size: 14px; }
+  .set-row input[type=number] {
+    width: 84px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 8px 10px; font-size: 15px; text-align: center;
+  }
+  .set-note { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .danger { background: var(--red) !important; color: #fff !important; }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none;
+    align-items: flex-end; justify-content: center; z-index: 10;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 520px;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); border: 1px solid var(--border);
+  }
+  .modal h3 { margin-bottom: 14px; font-size: 17px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  .field input, .field select {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); padding: 11px 12px; font-size: 16px;
+  }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-actions button { flex: 1; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .m-save { background: var(--accent); color: #10241a; }
+  .m-cancel { background: var(--surface-2); color: var(--text); border: 1px solid var(--border) !important; }
+  .m-delete { background: none; border: 1px solid var(--red) !important; color: var(--red); }
+
+  @media (min-width: 560px) {
+    main { max-width: 560px; margin: 0 auto; width: 100%; }
+    header { max-width: 560px; margin: 0 auto; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="fiddle">&#127931;</span>Trad Trainer</h1>
+  <span class="sub" id="headerSub"></span>
+</header>
+<main>
+  <section id="tab-practice"></section>
+  <section id="tab-tunes" style="display:none"></section>
+  <section id="tab-settings" style="display:none"></section>
+</main>
+<nav>
+  <button id="nav-practice" class="active"><span class="ico">&#9654;</span>Practice</button>
+  <button id="nav-tunes"><span class="ico">&#9835;</span>Tunes</button>
+  <button id="nav-settings"><span class="ico">&#9881;</span>Settings</button>
+</nav>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Add tune</h3>
+    <div class="field"><label>Title</label><input id="fTitle" type="text" autocomplete="off"></div>
+    <div class="field"><label>Type</label>
+      <select id="fType"></select>
+    </div>
+    <div class="field"><label>Current practice tempo (BPM)</label><input id="fTempo" type="number" min="30" max="300"></div>
+    <div class="field"><label>Pulses per bar (metronome accent)</label>
+      <select id="fBeats">
+        <option value="2">2 &mdash; jig 6/8, polka 2/4</option>
+        <option value="3">3 &mdash; slip jig 9/8, waltz 3/4</option>
+        <option value="4">4 &mdash; reel, hornpipe 4/4</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="m-delete" id="fDelete" style="display:none">Delete</button>
+      <button class="m-cancel" id="fCancel">Cancel</button>
+      <button class="m-save" id="fSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   Trad Trainer — spaced-repetition practice for Irish tunes.
+   Single file, no dependencies. Data lives in localStorage.
+   ============================================================ */
+
+const STORE_KEY = "tradTrainer.v1";
+
+const TUNE_TYPES = ["Reel", "Jig/Slip Jig", "Hornpipe/Slow Reel/Polka", "Waltz"];
+
+// Ceiling the tempo ladder climbs toward (editable in Settings).
+const DEFAULT_TARGETS = { "Reel": 220, "Jig/Slip Jig": 140, "Hornpipe/Slow Reel/Polka": 130, "Waltz": 120 };
+// Prefill when adding a brand-new tune you're still learning.
+const LEARN_TEMPOS = { "Reel": 100, "Jig/Slip Jig": 80, "Hornpipe/Slow Reel/Polka": 100, "Waltz": 100 };
+const DEFAULT_BEATS = { "Reel": 4, "Jig/Slip Jig": 2, "Hornpipe/Slow Reel/Polka": 4, "Waltz": 3 };
+
+// Tempo change applied alongside each SRS grade.
+const TEMPO_DELTA = { again: -8, hard: 0, good: 2, easy: 4 };
+const TEMPO_FLOOR = 40;
+
+const SEED_TUNES = [{"title":"Green Mountain","type":"Reel","tempo":100,"beats":4},{"title":"Ballydesmond No.3","type":"Hornpipe/Slow Reel/Polka","tempo":100,"beats":4},{"title":"Club Ceili","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"Haunted House","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"Little Diamond Polka","type":"Hornpipe/Slow Reel/Polka","tempo":100,"beats":4},{"title":"Murroe Polka","type":"Hornpipe/Slow Reel/Polka","tempo":100,"beats":4},{"title":"Maids of Ardath","type":"Hornpipe/Slow Reel/Polka","tempo":100,"beats":4},{"title":"Boyne Hunt","type":"Reel","tempo":100,"beats":4},{"title":"Shannon Breeze","type":"Reel","tempo":100,"beats":4},{"title":"Red Haired Lass","type":"Reel","tempo":100,"beats":4},{"title":"Tobin's Favourite","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"Tulla Reel","type":"Reel","tempo":100,"beats":4},{"title":"Skylark","type":"Reel","tempo":100,"beats":4},{"title":"Roaring Mary","type":"Reel","tempo":100,"beats":4},{"title":"Brosna Slide","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"O'Keefe's","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"Dennis Murphy's","type":"Jig/Slip Jig","tempo":80,"beats":2},{"title":"U-Bar 1B","type":"Jig/Slip Jig","tempo":130,"beats":2},{"title":"U-Bar 1A","type":"Jig/Slip Jig","tempo":130,"beats":2},{"title":"Humours of Glendart","type":"Jig/Slip Jig","tempo":130,"beats":2},{"title":"Concertina Reel","type":"Reel","tempo":200,"beats":4},{"title":"Over the Moor to Maggie","type":"Reel","tempo":200,"beats":4},{"title":"Farewell to Whalley Range","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Sporting Paddy","type":"Reel","tempo":220,"beats":4},{"title":"Donnybrook Fair Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Jig of Slurs","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Rolling in the Ryegrass","type":"Reel","tempo":220,"beats":4},{"title":"Tenpenny Bit","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Old Favourite","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Kilmaley","type":"Reel","tempo":220,"beats":4},{"title":"Geese in the Bog","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Teetotaller","type":"Reel","tempo":220,"beats":4},{"title":"Humours of Ballyloughlin","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Sligo Maid","type":"Reel","tempo":220,"beats":4},{"title":"Tabhair Dom do Lamh","type":"Waltz","tempo":120,"beats":3},{"title":"Garrett Barry's Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Man of the House","type":"Reel","tempo":220,"beats":4},{"title":"Rose in the Heather","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Ships are Sailing","type":"Reel","tempo":220,"beats":4},{"title":"Dunmore Lasses","type":"Reel","tempo":220,"beats":4},{"title":"I Buried My Wife & Danced On Her Grave","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Otter's Holt","type":"Reel","tempo":220,"beats":4},{"title":"Tarbolton Reel","type":"Reel","tempo":220,"beats":4},{"title":"The Rolling Waves","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Ashokan Farewell","type":"Waltz","tempo":120,"beats":3},{"title":"The Atholl Highlanders","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Castle Kelly","type":"Reel","tempo":220,"beats":4},{"title":"Saddle the Pony","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Foxhunters Slip Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Foxhunters Reel","type":"Reel","tempo":220,"beats":4},{"title":"Haste to the Wedding","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Merrily Kiss the Quaker","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Humours of Tulla","type":"Reel","tempo":220,"beats":4},{"title":"Jim Ward's","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Mist Covered Mountain","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Britches Full of Stitches","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"The Irish Washerwoman","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Jenny's Welcome To Charlie","type":"Reel","tempo":220,"beats":4},{"title":"Mason's Apron","type":"Reel","tempo":220,"beats":4},{"title":"The Maid of Mount Kisco","type":"Reel","tempo":220,"beats":4},{"title":"The Earl's Chair","type":"Reel","tempo":220,"beats":4},{"title":"Scatter the Mud","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Bucks of Oranmore","type":"Reel","tempo":220,"beats":4},{"title":"The Piper's of Roguery","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Floating Crowbar","type":"Reel","tempo":220,"beats":4},{"title":"Wall of Liscarroll","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Trim the Velvet","type":"Reel","tempo":220,"beats":4},{"title":"Lord Ramsay's","type":"Reel","tempo":220,"beats":4},{"title":"Frank's Reel","type":"Reel","tempo":220,"beats":4},{"title":"King Of The Pipers","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Clumsy Lover","type":"Reel","tempo":220,"beats":4},{"title":"Jenny Picking Cockles","type":"Reel","tempo":220,"beats":4},{"title":"The Trip To Sligo","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Road To Lisdoonvarna","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"John Ryan's Polka","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"Whiskey Before Breakfast","type":"Reel","tempo":220,"beats":4},{"title":"My Darling Asleep","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Wise Maid","type":"Reel","tempo":220,"beats":4},{"title":"Jenny's Chickens","type":"Reel","tempo":220,"beats":4},{"title":"Toss The Feathers (Em)","type":"Reel","tempo":220,"beats":4},{"title":"The Congress Reel","type":"Reel","tempo":220,"beats":4},{"title":"Toss The Feathers (D)","type":"Reel","tempo":220,"beats":4},{"title":"Jenny's Wedding","type":"Reel","tempo":220,"beats":4},{"title":"The Morning Dew","type":"Reel","tempo":220,"beats":4},{"title":"Miss McLeod's","type":"Reel","tempo":220,"beats":4},{"title":"The Gravel Walks","type":"Reel","tempo":220,"beats":4},{"title":"The Merry Maids Of Mitchelstown","type":"Reel","tempo":220,"beats":4},{"title":"The Merry Blacksmith","type":"Reel","tempo":220,"beats":4},{"title":"The Star Of Munster","type":"Reel","tempo":220,"beats":4},{"title":"Cup Of Tea","type":"Reel","tempo":220,"beats":4},{"title":"Calliope Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Rights of Man","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"The Grumbling Old Man And Woman","type":"Reel","tempo":220,"beats":4},{"title":"Scotch Mary","type":"Reel","tempo":220,"beats":4},{"title":"The Mountain Road","type":"Reel","tempo":220,"beats":4},{"title":"Tripping Up The Stairs","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Hag's Purse","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Boys of Bluehill","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"St Anne's Reel","type":"Reel","tempo":220,"beats":4},{"title":"Samhradh","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"The Collier's Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Lark in the Morning","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Inisheer","type":"Waltz","tempo":120,"beats":3},{"title":"Off To California","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"Bunker Hill","type":"Reel","tempo":220,"beats":4},{"title":"From Night Till Morn","type":"Reel","tempo":220,"beats":4},{"title":"The Old Torn Petticoat","type":"Reel","tempo":220,"beats":4},{"title":"The Monoghan","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Stool Of Repentance","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Tatter Jack Walsh's","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Hardiman The Fiddler","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Wind That Shakes The Barley","type":"Reel","tempo":220,"beats":4},{"title":"Bean An Ti At Lar","type":"Reel","tempo":220,"beats":4},{"title":"Musical Priest","type":"Reel","tempo":220,"beats":4},{"title":"Sally Gardens","type":"Reel","tempo":220,"beats":4},{"title":"Pigeon On The Gate","type":"Reel","tempo":220,"beats":4},{"title":"Farewell To Erin","type":"Reel","tempo":220,"beats":4},{"title":"King Of The Fairies","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"McGoldrick's Jig","type":"Reel","tempo":220,"beats":4},{"title":"The Sportsman's Hornpipe","type":"Hornpipe/Slow Reel/Polka","tempo":130,"beats":4},{"title":"Sí Bheag Sí Mhór","type":"Waltz","tempo":120,"beats":3},{"title":"Cliffs Of Moher","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Kiss For A Fig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Scartaglen Slide","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Blackthorn Stick","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Out On The Ocean","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Drummond Castle","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Hag At The Churn","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Rolling Wave","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Rambling Pitchfork","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Connachtman's Rambles","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Blarney Pilgrim","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Swallowtail Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Banish Misfortune","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Trip To Athlone","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Beekeeper","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Lilting Banshee","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Donegal","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Kesh Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Morrison's Jig","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Kevin McHugh's","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Diplodocus","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Apples In Winter","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Fig for a Kiss","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"The Butterfly","type":"Jig/Slip Jig","tempo":140,"beats":2},{"title":"Rakish Paddy","type":"Reel","tempo":220,"beats":4},{"title":"Drowsy Maggie","type":"Reel","tempo":220,"beats":4},{"title":"The Banshee","type":"Reel","tempo":220,"beats":4},{"title":"The Silver Spear","type":"Reel","tempo":220,"beats":4},{"title":"Sean Sa Cheo","type":"Reel","tempo":220,"beats":4},{"title":"Cooley's Reel","type":"Reel","tempo":220,"beats":4},{"title":"The Maid Behind The Bar","type":"Reel","tempo":220,"beats":4},{"title":"Spootiskerry","type":"Reel","tempo":220,"beats":4},{"title":"Willafjord","type":"Reel","tempo":220,"beats":4},{"title":"Ragged Hank Of Yarn","type":"Reel","tempo":220,"beats":4},{"title":"The Ivy Leaf","type":"Reel","tempo":220,"beats":4},{"title":"Dinny O'Brien's","type":"Reel","tempo":220,"beats":4},{"title":"Farewell To Connacht","type":"Reel","tempo":220,"beats":4}];
+
+/* ---------- dates (local time, YYYY-MM-DD strings) ---------- */
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function addDays(s, n) {
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + n);
+  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+}
+function daysUntil(s) {
+  const [y, m, d] = s.split("-").map(Number);
+  const [ty, tm, td] = todayStr().split("-").map(Number);
+  return Math.round((new Date(y, m - 1, d) - new Date(ty, tm - 1, td)) / 86400000);
+}
+
+/* ---------- SRS core (SM-2 style) ---------- */
+function newTune(title, type, tempo, beats) {
+  return {
+    id: "t" + Date.now() + Math.random().toString(36).slice(2, 7),
+    title, type,
+    tempo: Math.round(tempo),
+    beats: beats || DEFAULT_BEATS[type] || 4,
+    ease: 2.5, interval: 0, reps: 0, lapses: 0,
+    due: todayStr(), lastPracticed: null,
+  };
+}
+
+// Returns a copy of the tune with schedule + tempo updated for the grade.
+function gradeTune(tune, grade, targets) {
+  const t = Object.assign({}, tune);
+  const target = targets[t.type] || 200;
+  const clampTempo = v => Math.min(target, Math.max(TEMPO_FLOOR, v));
+  t.ease = t.ease || 2.5;
+
+  if (grade === "again") {
+    t.lapses = (t.lapses || 0) + 1;
+    t.reps = 0;
+    t.interval = 0;
+    t.ease = Math.max(1.3, t.ease - 0.2);
+  } else if (grade === "hard") {
+    t.ease = Math.max(1.3, t.ease - 0.15);
+    t.interval = t.interval < 1 ? 1 : t.interval * 1.2;
+    t.reps = (t.reps || 0) + 1;
+  } else if (grade === "good") {
+    t.interval = t.interval < 1 ? 1 : (t.interval < 3 ? 3 : t.interval * t.ease);
+    t.reps = (t.reps || 0) + 1;
+  } else if (grade === "easy") {
+    t.ease = t.ease + 0.15;
+    t.interval = t.interval < 1 ? 2 : t.interval * t.ease * 1.3;
+    t.reps = (t.reps || 0) + 1;
+  }
+  t.interval = Math.min(365, t.interval);
+  t.tempo = clampTempo(t.tempo + TEMPO_DELTA[grade]);
+  t.due = grade === "again" ? todayStr() : addDays(todayStr(), Math.max(1, Math.round(t.interval)));
+  t.lastPracticed = todayStr();
+  return t;
+}
+
+// Human label for what a grade would do to this tune's schedule.
+function previewInterval(tune, grade, targets) {
+  const g = gradeTune(tune, grade, targets);
+  const days = grade === "again" ? 0 : Math.max(1, Math.round(g.interval));
+  const when = days === 0 ? "today" : days === 1 ? "1d" : days < 30 ? days + "d" : Math.round(days / 30) + "mo";
+  const delta = g.tempo - tune.tempo;
+  const dtxt = delta === 0 ? "" : (delta > 0 ? " +" : " ") + delta;
+  return when + dtxt;
+}
+
+/* ---------- session / queue ---------- */
+function freshSession() { return { date: todayStr(), served: [], done: [] }; }
+
+function ensureSession(state) {
+  if (!state.session || state.session.date !== todayStr()) state.session = freshSession();
+  return state.session;
+}
+
+function dueTunes(state) {
+  const today = todayStr();
+  const done = new Set(state.session.done);
+  return state.tunes.filter(t => t.due <= today && !done.has(t.id));
+}
+
+// Due tunes we may still serve today, respecting the daily cap.
+// Tunes already served (e.g. graded Again) stay eligible past the cap.
+function sessionCap(state) {
+  return state.settings.dailyCap + (state.session.extra || 0);
+}
+function eligibleTunes(state) {
+  const served = new Set(state.session.served);
+  const capLeft = sessionCap(state) - served.size;
+  return dueTunes(state).filter(t => served.has(t.id) || capLeft > 0);
+}
+
+function pickNext(state, excludeId) {
+  const pool = eligibleTunes(state).filter(t => t.id !== excludeId);
+  if (pool.length === 0) {
+    const all = eligibleTunes(state);
+    return all.length ? all[0] : null; // only the excluded tune remains
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ---------- persistence ---------- */
+function defaultState() {
+  return {
+    version: 1,
+    settings: { dailyCap: 10, targets: Object.assign({}, DEFAULT_TARGETS) },
+    tunes: SEED_TUNES.map(s => newTune(s.title, s.type, s.tempo, s.beats)),
+    session: freshSession(),
+  };
+}
+
+/* ============ everything below touches the DOM ============ */
+if (typeof document !== "undefined") {
+
+let state;
+try {
+  const raw = localStorage.getItem(STORE_KEY);
+  state = raw ? JSON.parse(raw) : defaultState();
+} catch (e) { state = defaultState(); }
+ensureSession(state);
+if (!state.settings.targets) state.settings.targets = Object.assign({}, DEFAULT_TARGETS);
+save();
+
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+/* ---------- metronome (Web Audio, lookahead scheduler) ---------- */
+const Metro = {
+  ctx: null, timer: null, running: false,
+  bpm: 120, beats: 4, beatIdx: 0, nextTime: 0, wakeLock: null,
+  start(bpm, beats) {
+    this.bpm = bpm; this.beats = beats;
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.ctx.resume();
+    this.beatIdx = 0;
+    this.nextTime = this.ctx.currentTime + 0.08;
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.schedule(), 25);
+    this.running = true;
+    this.requestWake();
+    updatePlayBtn();
+  },
+  stop() {
+    clearInterval(this.timer);
+    this.running = false;
+    if (this.wakeLock) { this.wakeLock.release().catch(() => {}); this.wakeLock = null; }
+    updatePlayBtn();
+    document.querySelectorAll(".beats .dot").forEach(d => d.classList.remove("on", "accent"));
+  },
+  setBpm(bpm) { this.bpm = bpm; },
+  schedule() {
+    while (this.nextTime < this.ctx.currentTime + 0.12) {
+      const idx = this.beatIdx, accent = idx === 0;
+      this.click(this.nextTime, accent);
+      const delay = Math.max(0, (this.nextTime - this.ctx.currentTime) * 1000);
+      setTimeout(() => flashBeat(idx, accent), delay);
+      this.beatIdx = (this.beatIdx + 1) % this.beats;
+      this.nextTime += 60 / this.bpm;
+    }
+  },
+  click(time, accent) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.frequency.value = accent ? 1320 : 880;
+    gain.gain.setValueAtTime(accent ? 0.5 : 0.32, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(time); osc.stop(time + 0.06);
+  },
+  async requestWake() {
+    try { if (navigator.wakeLock) this.wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+  },
+};
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && Metro.running) Metro.requestWake();
+});
+
+function flashBeat(idx, accent) {
+  const dots = document.querySelectorAll(".beats .dot");
+  dots.forEach(d => d.classList.remove("on", "accent"));
+  const d = dots[idx];
+  if (d) { d.classList.add("on"); if (accent) d.classList.add("accent"); }
+}
+
+/* ---------- tabs ---------- */
+const tabs = ["practice", "tunes", "settings"];
+tabs.forEach(name => {
+  document.getElementById("nav-" + name).addEventListener("click", () => showTab(name));
+});
+function showTab(name) {
+  tabs.forEach(n => {
+    document.getElementById("tab-" + n).style.display = n === name ? "" : "none";
+    document.getElementById("nav-" + n).classList.toggle("active", n === name);
+  });
+  if (name === "practice") renderPractice();
+  if (name === "tunes") renderTunes();
+  if (name === "settings") renderSettings();
+}
+
+/* ---------- practice tab ---------- */
+let currentId = null;
+
+function renderPractice() {
+  ensureSession(state);
+  const el = document.getElementById("tab-practice");
+  const due = dueTunes(state);
+  const doneCount = state.session.done.length;
+  const capLeft = Math.max(0, sessionCap(state) - state.session.served.length);
+  document.getElementById("headerSub").textContent = state.tunes.length + " tunes";
+
+  const stats = `
+    <div class="stats">
+      <div class="stat"><b>${due.length}</b><span>due</span></div>
+      <div class="stat"><b>${doneCount}</b><span>done today</span></div>
+      <div class="stat"><b>${capLeft}</b><span>cap left</span></div>
+    </div>`;
+
+  const current = state.tunes.find(t => t.id === currentId);
+  const currentStillEligible = current && eligibleTunes(state).some(t => t.id === current.id);
+
+  if (!currentStillEligible) currentId = null;
+
+  if (currentId === null) {
+    const eligible = eligibleTunes(state);
+    if (eligible.length === 0) {
+      const capped = due.length > 0;
+      el.innerHTML = stats + `
+        <div class="done-msg">
+          <div class="big">${capped ? "&#127866;" : "&#127881;"}</div>
+          <h3>${capped ? "Daily cap reached" : "All caught up"}</h3>
+          <p>${capped
+            ? due.length + " tune" + (due.length === 1 ? "" : "s") + " carry over to tomorrow."
+            : "Nothing due. Come back tomorrow or add a new tune."}</p>
+          ${capped ? '<button class="big-btn secondary" id="overCap" style="max-width:260px;margin:18px auto 0">Practice one more anyway</button>' : ""}
+        </div>`;
+      const over = document.getElementById("overCap");
+      if (over) over.addEventListener("click", () => {
+        state.session.extra = (state.session.extra || 0) + 1; save(); nextTune();
+      });
+      return;
+    }
+    el.innerHTML = stats + `<button class="big-btn" id="startBtn">${doneCount ? "Next tune" : "Start practice"} &#9654;</button>`;
+    document.getElementById("startBtn").addEventListener("click", nextTune);
+    return;
+  }
+
+  const t = current;
+  const dots = Array.from({ length: t.beats }, () => '<div class="dot"></div>').join("");
+  el.innerHTML = stats + `
+    <div class="card">
+      <div class="type-chip">${esc(t.type)}</div>
+      <h2>${esc(t.title)}</h2>
+      <div class="meter-note">${t.beats} pulses/bar &middot; target ${state.settings.targets[t.type] || "?"} BPM</div>
+      <div class="tempo-row">
+        <button class="round-btn" id="bpmDown">&minus;</button>
+        <div class="bpm" id="bpmVal">${t.tempo}<small>BPM</small></div>
+        <button class="round-btn" id="bpmUp">+</button>
+      </div>
+      <div class="beats" id="beatDots">${dots}</div>
+      <button class="play-btn" id="playBtn">&#9654;</button>
+      <div class="grades">
+        <button class="g-again" data-g="again">Again<small>${previewInterval(t, "again", state.settings.targets)}</small></button>
+        <button class="g-hard"  data-g="hard">Hard<small>${previewInterval(t, "hard", state.settings.targets)}</small></button>
+        <button class="g-good"  data-g="good">Good<small>${previewInterval(t, "good", state.settings.targets)}</small></button>
+        <button class="g-easy"  data-g="easy">Easy<small>${previewInterval(t, "easy", state.settings.targets)}</small></button>
+      </div>
+    </div>`;
+
+  document.getElementById("playBtn").addEventListener("click", () => {
+    if (Metro.running) Metro.stop(); else Metro.start(t.tempo, t.beats);
+  });
+  document.getElementById("bpmDown").addEventListener("click", () => nudgeTempo(t, -2));
+  document.getElementById("bpmUp").addEventListener("click", () => nudgeTempo(t, +2));
+  el.querySelectorAll(".grades button").forEach(b =>
+    b.addEventListener("click", () => grade(b.dataset.g)));
+  updatePlayBtn();
+}
+
+function updatePlayBtn() {
+  const b = document.getElementById("playBtn");
+  if (b) { b.innerHTML = Metro.running ? "&#9632;" : "&#9654;"; b.classList.toggle("playing", Metro.running); }
+}
+
+function nudgeTempo(t, d) {
+  t.tempo = Math.min(300, Math.max(30, t.tempo + d));
+  save();
+  Metro.setBpm(t.tempo);
+  const v = document.getElementById("bpmVal");
+  if (v) v.innerHTML = t.tempo + "<small>BPM</small>";
+  renderGradePreviews(t);
+}
+
+function renderGradePreviews(t) {
+  document.querySelectorAll(".grades button").forEach(b => {
+    b.querySelector("small").textContent = previewInterval(t, b.dataset.g, state.settings.targets);
+  });
+}
+
+function nextTune() {
+  ensureSession(state);
+  const t = pickNext(state, currentId);
+  Metro.stop();
+  if (!t) { currentId = null; renderPractice(); return; }
+  currentId = t.id;
+  if (!state.session.served.includes(t.id)) state.session.served.push(t.id);
+  save();
+  renderPractice();
+  Metro.start(t.tempo, t.beats);
+}
+
+function grade(g) {
+  const idx = state.tunes.findIndex(t => t.id === currentId);
+  if (idx < 0) return;
+  const updated = gradeTune(state.tunes[idx], g, state.settings.targets);
+  state.tunes[idx] = updated;
+  if (g !== "again" && !state.session.done.includes(updated.id)) state.session.done.push(updated.id);
+  save();
+  nextTune();
+}
+
+/* ---------- tunes tab ---------- */
+let searchTerm = "";
+
+function renderTunes() {
+  const el = document.getElementById("tab-tunes");
+  el.innerHTML = `
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search tunes&hellip;" value="${esc(searchTerm)}">
+      <button id="addBtn">+ Add</button>
+    </div>
+    <div class="tune-count" id="tuneCount"></div>
+    <div id="tuneList"></div>`;
+  document.getElementById("search").addEventListener("input", e => {
+    searchTerm = e.target.value; renderTuneList();
+  });
+  document.getElementById("addBtn").addEventListener("click", () => openModal(null));
+  renderTuneList();
+}
+
+function renderTuneList() {
+  const q = searchTerm.trim().toLowerCase();
+  const list = state.tunes
+    .filter(t => !q || t.title.toLowerCase().includes(q) || t.type.toLowerCase().includes(q))
+    .sort((a, b) => a.title.localeCompare(b.title));
+  document.getElementById("tuneCount").textContent =
+    list.length + " of " + state.tunes.length + " tunes";
+  document.getElementById("tuneList").innerHTML = list.map(t => {
+    const d = daysUntil(t.due);
+    const dueTxt = d <= 0 ? "due now" : d === 1 ? "due tomorrow" : "due in " + d + "d";
+    return `
+      <div class="tune-row" data-id="${t.id}">
+        <div class="t-main">
+          <div class="t-title">${esc(t.title)}</div>
+          <div class="t-sub">${esc(t.type)}</div>
+        </div>
+        <div class="t-right">
+          <div class="t-bpm">${t.tempo}</div>
+          <div class="t-due ${d <= 0 ? "due-now" : ""}">${dueTxt}</div>
+        </div>
+      </div>`;
+  }).join("");
+  document.querySelectorAll(".tune-row").forEach(r =>
+    r.addEventListener("click", () => openModal(r.dataset.id)));
+}
+
+/* ---------- add / edit modal ---------- */
+let editingId = null;
+const modalBg = document.getElementById("modalBg");
+const fType = document.getElementById("fType");
+fType.innerHTML = TUNE_TYPES.map(t => `<option>${esc(t)}</option>`).join("");
+fType.addEventListener("change", () => {
+  if (editingId) return;
+  document.getElementById("fTempo").value = LEARN_TEMPOS[fType.value] || 100;
+  document.getElementById("fBeats").value = DEFAULT_BEATS[fType.value] || 4;
+});
+
+function openModal(id) {
+  editingId = id;
+  const t = id ? state.tunes.find(x => x.id === id) : null;
+  document.getElementById("modalTitle").textContent = t ? "Edit tune" : "Add tune";
+  document.getElementById("fTitle").value = t ? t.title : "";
+  fType.value = t ? t.type : "Reel";
+  document.getElementById("fTempo").value = t ? t.tempo : LEARN_TEMPOS["Reel"];
+  document.getElementById("fBeats").value = t ? t.beats : DEFAULT_BEATS["Reel"];
+  document.getElementById("fDelete").style.display = t ? "" : "none";
+  modalBg.classList.add("open");
+  if (!t) document.getElementById("fTitle").focus();
+}
+function closeModal() { modalBg.classList.remove("open"); editingId = null; }
+modalBg.addEventListener("click", e => { if (e.target === modalBg) closeModal(); });
+document.getElementById("fCancel").addEventListener("click", closeModal);
+
+document.getElementById("fSave").addEventListener("click", () => {
+  const title = document.getElementById("fTitle").value.trim();
+  const type = fType.value;
+  const tempo = parseInt(document.getElementById("fTempo").value, 10);
+  const beats = parseInt(document.getElementById("fBeats").value, 10);
+  if (!title || !tempo || tempo < 30 || tempo > 300) { alert("Give the tune a title and a tempo between 30 and 300."); return; }
+  if (editingId) {
+    const t = state.tunes.find(x => x.id === editingId);
+    Object.assign(t, { title, type, tempo, beats });
+  } else {
+    state.tunes.push(newTune(title, type, tempo, beats));
+  }
+  save(); closeModal(); renderTuneList(); renderPractice();
+});
+
+document.getElementById("fDelete").addEventListener("click", () => {
+  const t = state.tunes.find(x => x.id === editingId);
+  if (!t || !confirm('Delete "' + t.title + '"? This removes its practice history.')) return;
+  state.tunes = state.tunes.filter(x => x.id !== editingId);
+  if (currentId === editingId) currentId = null;
+  save(); closeModal(); renderTuneList(); renderPractice();
+});
+
+/* ---------- settings tab ---------- */
+function renderSettings() {
+  const el = document.getElementById("tab-settings");
+  const targets = state.settings.targets;
+  el.innerHTML = `
+    <div class="set-group">
+      <h3>Practice</h3>
+      <div class="set-row">
+        <label>Daily tune cap</label>
+        <input type="number" id="setCap" min="1" max="200" value="${state.settings.dailyCap}">
+      </div>
+      <div class="set-note">At most this many distinct tunes are served per day; the rest of the due queue carries over.</div>
+    </div>
+    <div class="set-group">
+      <h3>Target tempos (BPM ceiling per type)</h3>
+      ${TUNE_TYPES.map(t => `
+        <div class="set-row">
+          <label>${esc(t)}</label>
+          <input type="number" class="setTarget" data-type="${esc(t)}" min="40" max="300" value="${targets[t] || 200}">
+        </div>`).join("")}
+      <div class="set-note">Grades nudge each tune's tempo: Easy +4, Good +2, Hard 0, Again &minus;8 &mdash; never above the type's target.</div>
+    </div>
+    <div class="set-group">
+      <h3>Data</h3>
+      <button class="big-btn secondary" id="exportBtn" style="margin-top:0">Export backup (JSON)</button>
+      <button class="big-btn secondary" id="importBtn">Import backup</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      <button class="big-btn danger" id="resetBtn">Reset everything</button>
+      <div class="set-note">Data lives in this browser's storage on this device. Export a backup before clearing browser data or switching devices.</div>
+    </div>`;
+
+  document.getElementById("setCap").addEventListener("change", e => {
+    state.settings.dailyCap = Math.max(1, parseInt(e.target.value, 10) || 10); save();
+  });
+  el.querySelectorAll(".setTarget").forEach(inp => inp.addEventListener("change", e => {
+    const v = parseInt(e.target.value, 10);
+    if (v >= 40 && v <= 300) { state.settings.targets[inp.dataset.type] = v; save(); }
+  }));
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "trad-trainer-backup-" + todayStr() + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById("importBtn").addEventListener("click", () =>
+    document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!Array.isArray(data.tunes)) throw new Error("bad format");
+        if (!confirm("Replace current data with this backup (" + data.tunes.length + " tunes)?")) return;
+        state = data;
+        ensureSession(state);
+        save();
+        currentId = null;
+        renderSettings(); renderPractice();
+        alert("Imported.");
+      } catch (err) { alert("Could not read that file as a Trad Trainer backup."); }
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (!confirm("Reset ALL tunes and progress back to the original seed list?")) return;
+    state = defaultState();
+    save(); currentId = null;
+    renderSettings(); renderPractice();
+  });
+}
+
+/* ---------- misc ---------- */
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+renderPractice();
+}
+</script>
+</body>
+</html>

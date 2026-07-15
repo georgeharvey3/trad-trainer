@@ -1,0 +1,118 @@
+# Trad Trainer
+
+A spaced-repetition practice app for traditional Irish tunes, with a type-aware
+metronome and **per-tune audio recordings**. Tunes, progress, and recordings live
+in the cloud and sync across your devices.
+
+- **Frontend:** React + TypeScript + Vite, TanStack Query
+- **Backend:** Supabase (Postgres + Auth + Storage), secured with row-level security
+
+The original single-file prototype is archived in [`prototype/`](./prototype) for
+reference.
+
+## Prerequisites
+
+- Node 20+
+- A [Supabase](https://supabase.com) project (free tier is fine)
+
+## Setup
+
+1. **Install dependencies**
+
+   ```sh
+   npm install
+   ```
+
+2. **Create the database schema.** In the Supabase dashboard, open the SQL editor
+   and run [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql).
+   This creates the `profiles` and `tunes` tables, the private `recordings`
+   storage bucket, and all row-level-security policies.
+
+   > Using the Supabase CLI instead? `supabase db push` applies the migration.
+
+3. **Configure environment variables.** Copy the example and fill in your
+   project's URL and anon key (Supabase dashboard → Project Settings → API):
+
+   ```sh
+   cp .env.example .env
+   ```
+
+   ```
+   VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-public-key
+   ```
+
+   Both values are safe to ship in the client; RLS is what protects the data. If
+   they're missing, the app shows a setup screen instead of crashing.
+
+4. **Run it**
+
+   ```sh
+   npm run dev        # http://localhost:5173
+   ```
+
+The first time you sign up, the account is seeded with the 158 starter tunes.
+
+## Scripts
+
+| Script              | What it does                              |
+| ------------------- | ----------------------------------------- |
+| `npm run dev`       | Vite dev server                           |
+| `npm run build`     | Typecheck + production build to `dist/`   |
+| `npm run preview`   | Serve the production build locally        |
+| `npm run typecheck` | `tsc` with no emit                        |
+| `npm run lint`      | ESLint                                    |
+| `npm test`          | Vitest (SRS unit tests)                   |
+
+## How it works
+
+- **Practice tab** — tap *Start practice* and a random due tune is served; the
+  metronome auto-starts at that tune's current tempo. Grade it:
+  - **Again** — relearn today, tempo −8 BPM
+  - **Hard** — interval ×1.2, tempo held
+  - **Good** — interval grows (1d → 3d → ×ease), tempo +2 BPM
+  - **Easy** — interval grows faster, tempo +4 BPM
+
+  Tempo never exceeds the per-type target (Settings) and the −/+ buttons override
+  it mid-practice. Grades and tempo changes persist to your account immediately.
+- **Recordings** — each tune can hold one audio recording. Recording uses the
+  browser's `MediaRecorder`; the clip uploads to the private `recordings` bucket
+  (`<user_id>/<tune_id>`) and plays back via a short-lived signed URL. Recording
+  is **mutually exclusive with the metronome** — starting one stops the other.
+- **Daily cap** — at most N distinct tunes per day (default 10); the rest of the
+  due queue carries over. "Practice one more anyway" extends today only. The daily
+  queue is per-device; the durable schedule is synced.
+- **Metronome** — Web Audio lookahead scheduler; the first pulse of each bar is
+  accented. Pulses per bar come from the tune type (reel 4, jig 6/8 → 2,
+  slip jig 9/8 → 3, waltz 3, polka 2) and are editable per tune.
+- **Tunes tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
+
+## Architecture
+
+```
+src/
+├── lib/          srs, dates, session, types, seed, metronome, recorder, supabase client
+├── hooks/        TanStack Query hooks (tunes, settings, recordings) + metronome binding
+├── auth/         AuthProvider + email/password sign-in
+├── components/   Recorder, TuneModal
+└── pages/        Practice, Tunes, Settings
+```
+
+Data model (see the migration for full DDL + policies):
+
+- **`profiles`** — one row per user; holds `settings` (daily cap, per-type target
+  tempos) as JSON.
+- **`tunes`** — SRS state per tune (tempo, ease, interval, due date, …) plus the
+  storage path of its recording.
+- **`recordings` bucket** — private object storage, namespaced per user; every
+  policy is gated on `auth.uid()`.
+
+## Deploying
+
+The frontend is a static build (`npm run build` → `dist/`). Host it anywhere
+(Vercel, Netlify, Cloudflare Pages, S3). Set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` in the host's build environment. No separate backend to
+run — Supabase is the backend.
+
+For production auth, configure your site URL and email settings in the Supabase
+dashboard (Authentication → URL Configuration / Email templates).
