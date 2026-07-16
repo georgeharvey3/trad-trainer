@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./auth/AuthProvider";
 import { AuthScreen } from "./auth/AuthScreen";
 import { isSupabaseConfigured } from "./lib/supabase";
@@ -31,10 +31,15 @@ function AppShell() {
   const [tab, setTab] = useState<TabName>("practice");
   const tunes = useTunes();
   const seed = useSeedIfEmpty();
+  // Synchronous guard: StrictMode fires this effect twice on mount against the
+  // same stale mutation state, so an async `isIdle` check isn't enough to stop
+  // a double seed. A ref flips before the first mutate and blocks the second.
+  const seededRef = useRef(false);
 
   // On first login for a new account, populate the starter tune list.
   useEffect(() => {
-    if (tunes.isSuccess && tunes.data.length === 0 && seed.isIdle) {
+    if (tunes.isSuccess && tunes.data.length === 0 && !seededRef.current) {
+      seededRef.current = true;
       seed.mutate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
