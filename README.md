@@ -24,11 +24,13 @@ reference.
    ```
 
 2. **Create the database schema.** In the Supabase dashboard, open the SQL editor
-   and run [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql).
-   This creates the `profiles` and `tunes` tables, the private `recordings`
-   storage bucket, and all row-level-security policies.
+   and run each file in [`supabase/migrations/`](./supabase/migrations) in order:
+   - `0001_init.sql` — `profiles` and `tunes` tables, the private `recordings`
+     storage bucket, and all row-level-security policies.
+   - `0002_dedupe_tunes.sql` — removes any duplicate seed tunes and adds a unique
+     index on `(user_id, title, type)` so duplicates can't recur.
 
-   > Using the Supabase CLI instead? `supabase db push` applies the migration.
+   > Using the Supabase CLI instead? `supabase db push` applies all migrations.
 
 3. **Configure environment variables.** Copy the example and fill in your
    project's URL and anon key (Supabase dashboard → Project Settings → API):

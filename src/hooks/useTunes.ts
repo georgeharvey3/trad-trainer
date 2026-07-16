@@ -41,7 +41,11 @@ export function useSeedIfEmpty() {
         user_id: user!.id,
         ...tuneToRow(freshTuneFields(s)),
       }));
-      const { error } = await supabase.from("tunes").insert(rows);
+      // Idempotent seed: the unique index on (user_id, title, type) means any
+      // row that already exists is skipped, so a re-run can never duplicate.
+      const { error } = await supabase
+        .from("tunes")
+        .upsert(rows, { onConflict: "user_id,title,type", ignoreDuplicates: true });
       if (error) throw error;
       return rows.length;
     },
