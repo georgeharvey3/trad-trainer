@@ -35,9 +35,7 @@ export function AuthScreen() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <h1>
-          <span className="fiddle">&#127931;</span>Trad Trainer
-        </h1>
+        <h1>Trad Trainer</h1>
         <p className="tagline">Spaced-repetition practice for Irish tunes, synced across your devices.</p>
         <form onSubmit={onSubmit}>
           <div className="field">
@@ -62,7 +60,7 @@ export function AuthScreen() {
             />
           </div>
           {msg && <div className={`msg ${msg.kind}`}>{msg.text}</div>}
-          <button className="big-btn" type="submit" disabled={busy} style={{ marginTop: 6 }}>
+          <button className="big-btn" type="submit" disabled={busy}>
             {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
           </button>
         </form>

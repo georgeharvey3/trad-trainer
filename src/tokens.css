@@ -1,0 +1,109 @@
+/* Hallmark · tokens · theme: Almanac (light + dark, same anchors)
+ * axes: paper-band=light · display-style=roman-serif · accent-hue=chromatic-green
+ * See design.md — the locked system. Every colour and font in the app
+ * references these tokens; no inline values.
+ */
+:root {
+  /* Colour — light Almanac */
+  --color-paper:      oklch(96% 0.013 90);
+  --color-paper-2:    oklch(93.5% 0.015 90);
+  --color-paper-3:    oklch(90% 0.016 90);
+  --color-rule:       oklch(84% 0.015 90);
+  --color-rule-2:     oklch(56% 0.02 95);
+  --color-muted:      oklch(44% 0.02 120);
+  --color-ink:        oklch(23% 0.03 150);
+  --color-accent:     oklch(45% 0.11 155);
+  --color-accent-ink: oklch(97% 0.015 155);
+  --color-focus:      oklch(50% 0.13 155);
+  --color-backdrop:   oklch(25% 0.02 120 / 0.55);
+
+  /* Grade hues — functional coding, tint + border + dark text */
+  --color-again:        oklch(42% 0.14 30);
+  --color-again-tint:   oklch(93% 0.035 30);
+  --color-again-border: oklch(62% 0.11 30);
+  --color-hard:         oklch(43% 0.11 65);
+  --color-hard-tint:    oklch(93% 0.045 80);
+  --color-hard-border:  oklch(64% 0.10 70);
+  --color-good:         oklch(42% 0.11 155);
+  --color-good-tint:    oklch(92.5% 0.04 155);
+  --color-good-border:  oklch(60% 0.09 155);
+  --color-easy:         oklch(42% 0.09 235);
+  --color-easy-tint:    oklch(93% 0.03 235);
+  --color-easy-border:  oklch(63% 0.08 235);
+
+  /* Type — 2 + 1 (mono's single role: practice-ledger numerals) */
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  --text-xs: 0.6875rem;   /* 11px — small-caps labels */
+  --text-sm: 0.8125rem;   /* 13px — secondary */
+  --text-md: 0.9375rem;   /* 15px — UI default */
+  --text-lg: 1.0625rem;   /* 17px — list titles */
+  --text-xl: 1.25rem;     /* 20px — wordmark, stat figures */
+  --text-display: clamp(1.75rem, 6vw + 0.25rem, 2.25rem);
+  --text-bpm: 3.25rem;
+
+  --tracking-caps: 0.09em;
+
+  /* Space — 4pt scale */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Motion — Almanac 0.85×, functional */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 100ms;
+  --dur-short: 190ms;
+  --dur-long: 360ms;
+
+  /* Shape */
+  --radius-input: 7px;
+  --radius-card: 10px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --z-raised: 10;
+  --z-sticky: 200;
+  --z-modal: 400;
+
+  /* Control rhythm */
+  --control-h: 2.75rem; /* 44px — inputs and buttons share one height */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper:      oklch(17% 0.012 90);
+    --color-paper-2:    oklch(20.5% 0.014 90);
+    --color-paper-3:    oklch(24% 0.015 90);
+    --color-rule:       oklch(32% 0.015 90);
+    --color-rule-2:     oklch(50% 0.02 95);
+    --color-muted:      oklch(72% 0.02 100);
+    --color-ink:        oklch(93% 0.012 100);
+    --color-accent:     oklch(70% 0.10 155);
+    --color-accent-ink: oklch(18% 0.05 155);
+    --color-focus:      oklch(74% 0.12 155);
+    --color-backdrop:   oklch(10% 0.01 90 / 0.6);
+
+    --color-again:        oklch(72% 0.12 30);
+    --color-again-tint:   oklch(24% 0.05 30);
+    --color-again-border: oklch(48% 0.10 30);
+    --color-hard:         oklch(74% 0.10 75);
+    --color-hard-tint:    oklch(24% 0.05 80);
+    --color-hard-border:  oklch(50% 0.09 75);
+    --color-good:         oklch(72% 0.10 155);
+    --color-good-tint:    oklch(24% 0.045 155);
+    --color-good-border:  oklch(48% 0.09 155);
+    --color-easy:         oklch(74% 0.09 235);
+    --color-easy-tint:    oklch(24% 0.04 235);
+    --color-easy-border:  oklch(48% 0.08 235);
+  }
+}

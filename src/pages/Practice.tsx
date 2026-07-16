@@ -13,6 +13,7 @@ import {
 import { previewInterval } from "../lib/srs";
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
+import { ReferencePlayer } from "../components/ReferencePlayer";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
   { g: "again", cls: "g-again", label: "Again" },
@@ -115,7 +116,7 @@ export function Practice() {
         <>
           {stats}
           <div className="done-msg">
-            <div className="big">{capped ? "\u{1F37A}" : "\u{1F389}"}</div>
+            <div className="orn" aria-hidden="true">* * *</div>
             <h3>{capped ? "Daily cap reached" : "All caught up"}</h3>
             <p>
               {capped
@@ -124,8 +125,7 @@ export function Practice() {
             </p>
             {capped && (
               <button
-                className="big-btn secondary"
-                style={{ maxWidth: 260, margin: "18px auto 0" }}
+                className="big-btn secondary one-more"
                 onClick={() => {
                   const s = { ...session, extra: (session.extra || 0) + 1 };
                   setSession(s);
@@ -143,7 +143,7 @@ export function Practice() {
       <>
         {stats}
         <button className="big-btn" onClick={() => goToNext(null)}>
-          {doneCount ? "Next tune" : "Start practice"} &#9654;
+          {doneCount ? "Next tune" : "Start practice"}
         </button>
       </>
     );
@@ -173,7 +173,7 @@ export function Practice() {
             +
           </button>
         </div>
-        <div className="beats">
+        <div className="beats" aria-hidden="true">
           {Array.from({ length: t.beats }, (_, i) => {
             const on = metro.beat?.idx === i;
             const accent = on && metro.beat?.accent;
@@ -188,7 +188,12 @@ export function Practice() {
           {metro.running ? "■" : "▶"}
         </button>
 
+        {t.referenceUrl && (
+          <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
+        )}
+
         <Recorder
+          mode="saved"
           tune={t}
           metronomeRunning={metro.running}
           onRecordingStart={() => metro.stop()}

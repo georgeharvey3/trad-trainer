@@ -3,11 +3,9 @@ export function SetupScreen() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <h1>
-          <span className="fiddle">&#127931;</span>Trad Trainer
-        </h1>
+        <h1>Trad Trainer</h1>
         <p className="tagline">Almost there — connect your Supabase project.</p>
-        <ol style={{ paddingLeft: 18, fontSize: 14, lineHeight: 1.7, color: "var(--text)" }}>
+        <ol className="setup-steps">
           <li>
             Create a project at <code>supabase.com</code>.
           </li>

@@ -50,9 +50,7 @@ function AppShell() {
   return (
     <>
       <header>
-        <h1>
-          <span className="fiddle">&#127931;</span>Trad Trainer
-        </h1>
+        <h1>Trad Trainer</h1>
         <span className="sub">{count ? `${count} tunes` : ""}</span>
         <span className="spacer" />
         <button className="signout" onClick={() => void signOut()}>
@@ -66,13 +64,13 @@ function AppShell() {
       </main>
       <nav>
         <button className={tab === "practice" ? "active" : ""} onClick={() => setTab("practice")}>
-          <span className="ico">&#9654;</span>Practice
+          Practice
         </button>
         <button className={tab === "tunes" ? "active" : ""} onClick={() => setTab("tunes")}>
-          <span className="ico">&#9835;</span>Tunes
+          Tunes
         </button>
         <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>
-          <span className="ico">&#9881;</span>Settings
+          Settings
         </button>
       </nav>
     </>
