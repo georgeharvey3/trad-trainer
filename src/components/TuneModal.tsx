@@ -2,6 +2,9 @@ import { useState } from "react";
 import { TUNE_TYPES, type Tune, type TuneType } from "../lib/types";
 import { DEFAULT_BEATS, LEARN_TEMPOS } from "../lib/srs";
 import { useAddTune, useDeleteTune, useUpdateTune } from "../hooks/useTunes";
+import { useSaveRecording } from "../hooks/useRecording";
+import type { Recording } from "../lib/recorder";
+import { Recorder } from "./Recorder";
 
 interface Props {
   open: boolean;
@@ -25,12 +28,16 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
   const add = useAddTune();
   const update = useUpdateTune();
   const del = useDeleteTune();
+  const saveRecording = useSaveRecording();
 
   // Initialised once from props; the parent remounts this form when `tune` changes.
   const [title, setTitle] = useState(tune?.title ?? "");
   const [type, setType] = useState<TuneType>(tune?.type ?? "Reel");
   const [tempo, setTempo] = useState<number>(tune?.tempo ?? LEARN_TEMPOS["Reel"]);
   const [beats, setBeats] = useState<number>(tune?.beats ?? DEFAULT_BEATS["Reel"]);
+  const [isRecording, setIsRecording] = useState(false);
+  // Add mode only: a recording captured before the tune exists, uploaded on save.
+  const [draft, setDraft] = useState<Recording | null>(null);
 
   function onTypeChange(next: TuneType) {
     setType(next);
@@ -49,7 +56,10 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
     if (tune) {
       await update.mutateAsync({ id: tune.id, patch: { title: cleanTitle, type, tempo, beats } });
     } else {
-      await add.mutateAsync({ title: cleanTitle, type, tempo, beats });
+      const created = await add.mutateAsync({ title: cleanTitle, type, tempo, beats });
+      if (draft) {
+        await saveRecording.mutateAsync({ tune: created, recording: draft });
+      }
     }
     onClose();
   }
@@ -61,7 +71,8 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
     onClose();
   }
 
-  const busy = add.isPending || update.isPending || del.isPending;
+  const busy =
+    add.isPending || update.isPending || del.isPending || saveRecording.isPending || isRecording;
 
   return (
     <div className="modal">
@@ -96,6 +107,24 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
           <option value={4}>4 &mdash; reel, hornpipe 4/4</option>
         </select>
       </div>
+      {tune ? (
+        <Recorder
+          mode="saved"
+          tune={tune}
+          metronomeRunning={false}
+          onRecordingStart={() => {}}
+          onRecordingChange={setIsRecording}
+        />
+      ) : (
+        <Recorder
+          mode="draft"
+          draft={draft}
+          onDraftChange={setDraft}
+          metronomeRunning={false}
+          onRecordingStart={() => {}}
+          onRecordingChange={setIsRecording}
+        />
+      )}
       <div className="modal-actions">
         {tune && (
           <button className="m-delete" onClick={onDelete} disabled={busy}>

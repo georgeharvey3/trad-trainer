@@ -45,7 +45,7 @@ function SettingsForm({ initial }: { initial: SettingsType }) {
         <h3>Account</h3>
         <div className="set-row">
           <label>Signed in as</label>
-          <span style={{ color: "var(--muted)", fontSize: 14 }}>{user?.email}</span>
+          <span className="set-value">{user?.email}</span>
         </div>
         <div className="set-note">
           Your tunes, progress, and recordings sync to this account across devices.
@@ -98,7 +98,7 @@ function SettingsForm({ initial }: { initial: SettingsType }) {
 
       <div className="set-group">
         <h3>Data</h3>
-        <button className="big-btn secondary" style={{ marginTop: 0 }} onClick={exportBackup}>
+        <button className="big-btn secondary" onClick={exportBackup}>
           Export backup (JSON)
         </button>
         <div className="set-note">
