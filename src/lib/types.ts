@@ -30,6 +30,8 @@ export interface Tune {
   /** Storage path of the latest recording, or null if none. */
   recordingPath: string | null;
   recordingDurationMs: number | null;
+  /** Raw YouTube URL for a reference recording, or null. Parsed at render. */
+  referenceUrl: string | null;
   updatedAt: string;
 }
 

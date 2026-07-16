@@ -4,6 +4,7 @@ import { DEFAULT_BEATS, LEARN_TEMPOS } from "../lib/srs";
 import { useAddTune, useDeleteTune, useUpdateTune } from "../hooks/useTunes";
 import { useSaveRecording } from "../hooks/useRecording";
 import type { Recording } from "../lib/recorder";
+import { isYouTubeUrl } from "../lib/youtube";
 import { Recorder } from "./Recorder";
 
 interface Props {
@@ -35,6 +36,7 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
   const [type, setType] = useState<TuneType>(tune?.type ?? "Reel");
   const [tempo, setTempo] = useState<number>(tune?.tempo ?? LEARN_TEMPOS["Reel"]);
   const [beats, setBeats] = useState<number>(tune?.beats ?? DEFAULT_BEATS["Reel"]);
+  const [referenceUrl, setReferenceUrl] = useState(tune?.referenceUrl ?? "");
   const [isRecording, setIsRecording] = useState(false);
   // Add mode only: a recording captured before the tune exists, uploaded on save.
   const [draft, setDraft] = useState<Recording | null>(null);
@@ -53,10 +55,24 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
       alert("Give the tune a title and a tempo between 30 and 300.");
       return;
     }
+    const cleanRef = referenceUrl.trim();
+    if (cleanRef && !isYouTubeUrl(cleanRef)) {
+      alert("That doesn't look like a YouTube link. Paste a youtube.com or youtu.be URL, or clear the field.");
+      return;
+    }
     if (tune) {
-      await update.mutateAsync({ id: tune.id, patch: { title: cleanTitle, type, tempo, beats } });
+      await update.mutateAsync({
+        id: tune.id,
+        patch: { title: cleanTitle, type, tempo, beats, referenceUrl: cleanRef || null },
+      });
     } else {
-      const created = await add.mutateAsync({ title: cleanTitle, type, tempo, beats });
+      const created = await add.mutateAsync({
+        title: cleanTitle,
+        type,
+        tempo,
+        beats,
+        referenceUrl: cleanRef || null,
+      });
       if (draft) {
         await saveRecording.mutateAsync({ tune: created, recording: draft });
       }
@@ -106,6 +122,17 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
           <option value={3}>3 &mdash; slip jig 9/8, waltz 3/4</option>
           <option value={4}>4 &mdash; reel, hornpipe 4/4</option>
         </select>
+      </div>
+      <div className="field">
+        <label>Reference video (YouTube URL, optional)</label>
+        <input
+          type="url"
+          inputMode="url"
+          autoComplete="off"
+          placeholder="https://youtu.be/…"
+          value={referenceUrl}
+          onChange={(e) => setReferenceUrl(e.target.value)}
+        />
       </div>
       {tune ? (
         <Recorder

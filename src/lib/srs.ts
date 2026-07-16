@@ -37,6 +37,7 @@ export type NewTuneInput = {
   type: TuneType;
   tempo: number;
   beats?: number;
+  referenceUrl?: string | null;
 };
 
 /** Fresh SRS fields for a brand-new tune (id/persistence handled by the caller). */
@@ -54,6 +55,7 @@ export function freshTuneFields(input: NewTuneInput) {
     lastPracticed: null as string | null,
     recordingPath: null as string | null,
     recordingDurationMs: null as number | null,
+    referenceUrl: input.referenceUrl ?? null,
   };
 }
 

@@ -31,6 +31,7 @@ export interface TuneRow {
   last_practiced: string | null;
   recording_path: string | null;
   recording_duration_ms: number | null;
+  reference_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +51,7 @@ export function rowToTune(r: TuneRow): Tune {
     lastPracticed: r.last_practiced,
     recordingPath: r.recording_path,
     recordingDurationMs: r.recording_duration_ms,
+    referenceUrl: r.reference_url,
     updatedAt: r.updated_at,
   };
 }
@@ -69,5 +71,6 @@ export function tuneToRow(t: Partial<Tune>): Partial<TuneRow> {
   if (t.lastPracticed !== undefined) r.last_practiced = t.lastPracticed;
   if (t.recordingPath !== undefined) r.recording_path = t.recordingPath;
   if (t.recordingDurationMs !== undefined) r.recording_duration_ms = t.recordingDurationMs;
+  if (t.referenceUrl !== undefined) r.reference_url = t.referenceUrl;
   return r;
 }

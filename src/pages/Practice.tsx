@@ -13,6 +13,7 @@ import {
 import { previewInterval } from "../lib/srs";
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
+import { ReferencePlayer } from "../components/ReferencePlayer";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
   { g: "again", cls: "g-again", label: "Again" },
@@ -186,6 +187,10 @@ export function Practice() {
         >
           {metro.running ? "■" : "▶"}
         </button>
+
+        {t.referenceUrl && (
+          <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
+        )}
 
         <Recorder
           mode="saved"
