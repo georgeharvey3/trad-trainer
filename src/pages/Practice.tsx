@@ -30,7 +30,10 @@ export function Practice() {
   const metro = useMetronome();
 
   const [session, setSessionState] = useState<Session>(() => loadSession());
-  const [currentId, setCurrentId] = useState<string | null>(null);
+  // Tunes visited this session, in order. The last entry is the live tune;
+  // `cursor` lets you walk back through earlier ones.
+  const [visited, setVisited] = useState<string[]>([]);
+  const [cursor, setCursor] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
 
   const tunes = useMemo(() => tunesQ.data ?? [], [tunesQ.data]);
@@ -51,21 +54,38 @@ export function Practice() {
     return <div className="center-note">Loading&hellip;</div>;
   }
 
-  const current = tunes.find((t) => t.id === currentId) ?? null;
-  const currentEligible = current && eligible.some((t) => t.id === current.id);
-  const activeCurrent = currentEligible ? current : null;
+  const liveId = visited.length ? visited[visited.length - 1] : null;
+  const live = tunes.find((t) => t.id === liveId) ?? null;
+  const liveEligible = live && eligible.some((t) => t.id === live.id);
+  const activeLive = liveEligible ? live : null;
+
+  const atLive = cursor >= visited.length - 1;
+  const viewId = visited.length ? visited[cursor] : null;
+  const viewTune = viewId ? (tunes.find((t) => t.id === viewId) ?? null) : null;
 
   const doneCount = session.done.length;
   const capLeft = Math.max(0, sessionCap(session, settings) - session.served.length);
+
+  function goBack() {
+    metro.stop();
+    setCursor((c) => Math.max(0, c - 1));
+  }
+
+  function goForward() {
+    metro.stop();
+    setCursor((c) => Math.min(visited.length - 1, c + 1));
+  }
 
   function goToNext(excludeId: string | null) {
     metro.stop();
     const next = pickNext(tunes, session, settings!, excludeId);
     if (!next) {
-      setCurrentId(null);
+      setVisited([]);
+      setCursor(0);
       return;
     }
-    setCurrentId(next.id);
+    setVisited((v) => [...v, next.id]);
+    setCursor(visited.length);
     if (!session.served.includes(next.id)) {
       setSession({ ...session, served: [...session.served, next.id] });
     }
@@ -74,8 +94,8 @@ export function Practice() {
   }
 
   function onGrade(g: Grade) {
-    if (!activeCurrent) return;
-    const t = activeCurrent;
+    if (!activeLive) return;
+    const t = activeLive;
     void gradeTuneMut(t, g, settings!);
     if (g !== "again" && !session.done.includes(t.id)) {
       setSession({ ...session, done: [...session.done, t.id] });
@@ -108,8 +128,106 @@ export function Practice() {
     </div>
   );
 
+  function renderTuneCard(t: Tune, isLiveCard: boolean) {
+    const target = settings!.targets[t.type] ?? "?";
+    const showNav = visited.length > 1;
+    return (
+      <div className="card">
+        {showNav && (
+          <div className="tune-nav">
+            <button
+              className="nav-arrow"
+              onClick={goBack}
+              disabled={cursor === 0}
+              aria-label="Previous tune"
+            >
+              &lsaquo;
+            </button>
+            <button
+              className="nav-arrow"
+              onClick={goForward}
+              disabled={atLive}
+              aria-label="Back to current tune"
+            >
+              &rsaquo;
+            </button>
+          </div>
+        )}
+        <div className="type-chip">{t.type}</div>
+        <h2>{t.title}</h2>
+        <div className="meter-note">
+          {t.beats} pulses/bar &middot; target {target} BPM
+        </div>
+        <div className="tempo-row">
+          <button className="round-btn" onClick={() => nudgeTempo(t, -2)}>
+            &minus;
+          </button>
+          <div className="bpm">
+            {t.tempo}
+            <small>BPM</small>
+          </div>
+          <button className="round-btn" onClick={() => nudgeTempo(t, +2)}>
+            +
+          </button>
+        </div>
+        <div className="beats" aria-hidden="true">
+          {Array.from({ length: t.beats }, (_, i) => {
+            const on = metro.beat?.idx === i;
+            const accent = on && metro.beat?.accent;
+            return <div key={i} className={`dot${on ? " on" : ""}${accent ? " accent" : ""}`} />;
+          })}
+        </div>
+        <button
+          className={`play-btn${metro.running ? " playing" : ""}`}
+          disabled={isRecording}
+          onClick={() => (metro.running ? metro.stop() : metro.start(t.tempo, t.beats))}
+        >
+          {metro.running ? "■" : "▶"}
+        </button>
+
+        {t.referenceUrl && (
+          <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
+        )}
+
+        <Recorder
+          key={t.id}
+          mode="saved"
+          tune={t}
+          metronomeRunning={metro.running}
+          onRecordingStart={() => metro.stop()}
+          onRecordingChange={setIsRecording}
+        />
+
+        {isLiveCard ? (
+          <div className="grades">
+            {GRADES.map(({ g, cls, label }) => (
+              <button key={g} className={cls} disabled={isRecording} onClick={() => onGrade(g)}>
+                {label}
+                <small>{previewInterval(t, g, settings!.targets)}</small>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button className="big-btn secondary" disabled={isRecording} onClick={goForward}>
+            Back to current tune
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // ---- Revisiting an earlier tune from this session ----
+  if (!atLive && viewTune) {
+    return (
+      <>
+        {stats}
+        {renderTuneCard(viewTune, false)}
+      </>
+    );
+  }
+
   // ---- No active tune: start / caught-up / capped states ----
-  if (!activeCurrent) {
+  if (!activeLive) {
     if (eligible.length === 0) {
       const capped = due.length > 0;
       return (
@@ -150,65 +268,10 @@ export function Practice() {
   }
 
   // ---- Active tune card ----
-  const t = activeCurrent;
-  const target = settings.targets[t.type] ?? "?";
   return (
     <>
       {stats}
-      <div className="card">
-        <div className="type-chip">{t.type}</div>
-        <h2>{t.title}</h2>
-        <div className="meter-note">
-          {t.beats} pulses/bar &middot; target {target} BPM
-        </div>
-        <div className="tempo-row">
-          <button className="round-btn" onClick={() => nudgeTempo(t, -2)}>
-            &minus;
-          </button>
-          <div className="bpm">
-            {t.tempo}
-            <small>BPM</small>
-          </div>
-          <button className="round-btn" onClick={() => nudgeTempo(t, +2)}>
-            +
-          </button>
-        </div>
-        <div className="beats" aria-hidden="true">
-          {Array.from({ length: t.beats }, (_, i) => {
-            const on = metro.beat?.idx === i;
-            const accent = on && metro.beat?.accent;
-            return <div key={i} className={`dot${on ? " on" : ""}${accent ? " accent" : ""}`} />;
-          })}
-        </div>
-        <button
-          className={`play-btn${metro.running ? " playing" : ""}`}
-          disabled={isRecording}
-          onClick={() => (metro.running ? metro.stop() : metro.start(t.tempo, t.beats))}
-        >
-          {metro.running ? "■" : "▶"}
-        </button>
-
-        {t.referenceUrl && (
-          <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
-        )}
-
-        <Recorder
-          mode="saved"
-          tune={t}
-          metronomeRunning={metro.running}
-          onRecordingStart={() => metro.stop()}
-          onRecordingChange={setIsRecording}
-        />
-
-        <div className="grades">
-          {GRADES.map(({ g, cls, label }) => (
-            <button key={g} className={cls} disabled={isRecording} onClick={() => onGrade(g)}>
-              {label}
-              <small>{previewInterval(t, g, settings.targets)}</small>
-            </button>
-          ))}
-        </div>
-      </div>
+      {renderTuneCard(activeLive, true)}
     </>
   );
 }
