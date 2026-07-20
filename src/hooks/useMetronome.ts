@@ -24,6 +24,9 @@ export function useMetronome() {
       metronome.onStateChange = null;
       metronome.onBeat = null;
       if (beatTimer.current) clearTimeout(beatTimer.current);
+      // Stop on unmount so leaving the practice view (e.g. switching tabs)
+      // can't leave the metronome ticking with no visible way to stop it.
+      metronome.stop();
     };
   }, []);
 

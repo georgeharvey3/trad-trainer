@@ -92,6 +92,13 @@ export function Recorder(props: Props) {
     }
   }
 
+  function cancelRecording() {
+    recorderRef.current.cancel();
+    setRecording(false);
+    onRecordingChange(false);
+    setStatus("");
+  }
+
   async function removeRecording() {
     if (props.mode === "draft") {
       props.onDraftChange(null);
@@ -135,10 +142,15 @@ export function Recorder(props: Props) {
             {hasRecording ? "Re-record" : "Record"}
           </button>
         ) : (
-          <button className="rec-btn recording" onClick={stopAndSave}>
-            <span className="rec-dot rec-blink" />
-            Stop &amp; save
-          </button>
+          <>
+            <button className="rec-btn recording" onClick={stopAndSave}>
+              <span className="rec-dot rec-blink" />
+              Stop &amp; save
+            </button>
+            <button className="rec-btn danger-text" onClick={cancelRecording}>
+              Discard
+            </button>
+          </>
         )}
 
         {hasRecording && !recording && (

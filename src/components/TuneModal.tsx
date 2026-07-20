@@ -35,7 +35,6 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
   const [title, setTitle] = useState(tune?.title ?? "");
   const [type, setType] = useState<TuneType>(tune?.type ?? "Reel");
   const [tempo, setTempo] = useState<number>(tune?.tempo ?? LEARN_TEMPOS["Reel"]);
-  const [beats, setBeats] = useState<number>(tune?.beats ?? DEFAULT_BEATS["Reel"]);
   const [referenceUrl, setReferenceUrl] = useState(tune?.referenceUrl ?? "");
   const [isRecording, setIsRecording] = useState(false);
   // Add mode only: a recording captured before the tune exists, uploaded on save.
@@ -45,7 +44,6 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
     setType(next);
     if (!tune) {
       setTempo(LEARN_TEMPOS[next] || 100);
-      setBeats(DEFAULT_BEATS[next] || 4);
     }
   }
 
@@ -60,24 +58,43 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
       alert("That doesn't look like a YouTube link. Paste a youtube.com or youtu.be URL, or clear the field.");
       return;
     }
-    if (tune) {
-      await update.mutateAsync({
-        id: tune.id,
-        patch: { title: cleanTitle, type, tempo, beats, referenceUrl: cleanRef || null },
-      });
-    } else {
-      const created = await add.mutateAsync({
-        title: cleanTitle,
-        type,
-        tempo,
-        beats,
-        referenceUrl: cleanRef || null,
-      });
-      if (draft) {
-        await saveRecording.mutateAsync({ tune: created, recording: draft });
+    // Pulses per bar is fully determined by the tune type (jig 6/8 → 2,
+    // slip jig/waltz → 3, reel/hornpipe/polka → 4), so derive it rather than
+    // asking for it.
+    const beats = DEFAULT_BEATS[type] || 4;
+    try {
+      if (tune) {
+        await update.mutateAsync({
+          id: tune.id,
+          patch: { title: cleanTitle, type, tempo, beats, referenceUrl: cleanRef || null },
+        });
+      } else {
+        const created = await add.mutateAsync({
+          title: cleanTitle,
+          type,
+          tempo,
+          beats,
+          referenceUrl: cleanRef || null,
+        });
+        if (draft) {
+          await saveRecording.mutateAsync({ tune: created, recording: draft });
+        }
       }
+      onClose();
+    } catch (err) {
+      // Supabase throws a plain PostgrestError object ({ message, code, details }),
+      // not an Error instance, so pull the fields out explicitly.
+      const e = err as { message?: string; code?: string; details?: string } | null;
+      const msg = e?.message || (err instanceof Error ? err.message : "") || "Unknown error";
+      // 23505 = unique_violation: another tune already has this exact title + type
+      // (the tunes_user_title_type_key unique index).
+      const dup = e?.code === "23505" || /duplicate key|unique constraint/i.test(msg);
+      alert(
+        dup
+          ? `Couldn't save: another tune already exists with the title "${cleanTitle}" and type "${type}". Rename or remove the duplicate.`
+          : `Couldn't save: ${msg}${e?.details ? ` (${e.details})` : ""}`,
+      );
     }
-    onClose();
   }
 
   async function onDelete() {
@@ -114,14 +131,6 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
           value={tempo}
           onChange={(e) => setTempo(parseInt(e.target.value, 10) || 0)}
         />
-      </div>
-      <div className="field">
-        <label>Pulses per bar (metronome accent)</label>
-        <select value={beats} onChange={(e) => setBeats(parseInt(e.target.value, 10))}>
-          <option value={2}>2 &mdash; jig 6/8, polka 2/4</option>
-          <option value={3}>3 &mdash; slip jig 9/8, waltz 3/4</option>
-          <option value={4}>4 &mdash; reel, hornpipe 4/4</option>
-        </select>
       </div>
       <div className="field">
         <label>Reference video (YouTube URL, optional)</label>

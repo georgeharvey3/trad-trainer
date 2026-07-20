@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTunes, useUpdateTune, useGradeTune } from "../hooks/useTunes";
 import { useSettings } from "../hooks/useSettings";
 import { useMetronome } from "../hooks/useMetronome";
@@ -50,10 +50,6 @@ export function Practice() {
     [tunes, session, settings],
   );
 
-  if (tunesQ.isLoading || settingsQ.isLoading || !settings) {
-    return <div className="center-note">Loading&hellip;</div>;
-  }
-
   const liveId = visited.length ? visited[visited.length - 1] : null;
   const live = tunes.find((t) => t.id === liveId) ?? null;
   const liveEligible = live && eligible.some((t) => t.id === live.id);
@@ -62,6 +58,19 @@ export function Practice() {
   const atLive = cursor >= visited.length - 1;
   const viewId = visited.length ? visited[cursor] : null;
   const viewTune = viewId ? (tunes.find((t) => t.id === viewId) ?? null) : null;
+
+  // A tune card (the only place with metronome controls) shows either when
+  // revisiting an earlier tune or when there's an active live tune. If neither
+  // is on screen, force the metronome off so it can't run with no way to stop it.
+  const cardShown = (!atLive && !!viewTune) || !!activeLive;
+  useEffect(() => {
+    if (!cardShown) metro.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardShown]);
+
+  if (tunesQ.isLoading || settingsQ.isLoading || !settings) {
+    return <div className="center-note">Loading&hellip;</div>;
+  }
 
   const doneCount = session.done.length;
   const capLeft = Math.max(0, sessionCap(session, settings) - session.served.length);
@@ -76,9 +85,12 @@ export function Practice() {
     setCursor((c) => Math.min(visited.length - 1, c + 1));
   }
 
-  function goToNext(excludeId: string | null) {
+  // `sess` defaults to current state, but callers that have just produced a
+  // newer session (e.g. after grading) must pass it, or the stale closure value
+  // makes pickNext re-serve the tune that was just completed.
+  function goToNext(excludeId: string | null, sess: Session = session) {
     metro.stop();
-    const next = pickNext(tunes, session, settings!, excludeId);
+    const next = pickNext(tunes, sess, settings!, excludeId);
     if (!next) {
       setVisited([]);
       setCursor(0);
@@ -86,8 +98,8 @@ export function Practice() {
     }
     setVisited((v) => [...v, next.id]);
     setCursor(visited.length);
-    if (!session.served.includes(next.id)) {
-      setSession({ ...session, served: [...session.served, next.id] });
+    if (!sess.served.includes(next.id)) {
+      setSession({ ...sess, served: [...sess.served, next.id] });
     }
     // Auto-start the metronome for the new tune (this runs from a user gesture).
     metro.start(next.tempo, next.beats);
@@ -98,8 +110,9 @@ export function Practice() {
     const t = activeLive;
     void gradeTuneMut(t, g, settings!);
     if (g !== "again" && !session.done.includes(t.id)) {
-      setSession({ ...session, done: [...session.done, t.id] });
-      goToNext(t.id);
+      const next = { ...session, done: [...session.done, t.id] };
+      setSession(next);
+      goToNext(t.id, next);
     } else {
       goToNext(g === "again" ? null : t.id);
     }
