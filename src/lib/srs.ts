@@ -6,26 +6,34 @@ import { addDays, todayStr } from "./dates";
 import type { Grade, TargetMap, Tune, TuneType } from "./types";
 
 // Ceiling the tempo ladder climbs toward (editable in Settings).
+// The legacy "Jig/Slip Jig" key is kept as a fallback for any tune rows not
+// yet migrated to the split "Jig" / "Slip Jig" types (see migration 0003).
 export const DEFAULT_TARGETS: TargetMap = {
   Reel: 220,
-  "Jig/Slip Jig": 140,
+  Jig: 140,
+  "Slip Jig": 140,
   "Hornpipe/Slow Reel/Polka": 130,
   Waltz: 120,
+  "Jig/Slip Jig": 140,
 };
 
 // Prefill when adding a brand-new tune you're still learning.
 export const LEARN_TEMPOS: TargetMap = {
   Reel: 100,
-  "Jig/Slip Jig": 80,
+  Jig: 80,
+  "Slip Jig": 80,
   "Hornpipe/Slow Reel/Polka": 100,
   Waltz: 100,
+  "Jig/Slip Jig": 80,
 };
 
 export const DEFAULT_BEATS: Record<string, number> = {
   Reel: 4,
-  "Jig/Slip Jig": 2,
+  Jig: 2,
+  "Slip Jig": 3,
   "Hornpipe/Slow Reel/Polka": 4,
   Waltz: 3,
+  "Jig/Slip Jig": 2,
 };
 
 // Tempo change applied alongside each SRS grade.

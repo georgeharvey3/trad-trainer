@@ -2,7 +2,8 @@
 
 export const TUNE_TYPES = [
   "Reel",
-  "Jig/Slip Jig",
+  "Jig",
+  "Slip Jig",
   "Hornpipe/Slow Reel/Polka",
   "Waltz",
 ] as const;
