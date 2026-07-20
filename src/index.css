@@ -164,6 +164,28 @@ nav button.active::before { background: var(--color-accent); }
   padding: var(--space-lg) var(--space-md);
   text-align: center;
 }
+.tune-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: calc(-1 * var(--space-sm));
+}
+.nav-arrow {
+  font-family: var(--font-body);
+  font-size: var(--text-xl);
+  line-height: 1;
+  color: var(--color-ink);
+  background: none;
+  border: none;
+  padding: var(--space-2xs) var(--space-sm);
+  cursor: pointer;
+}
+.nav-arrow:hover:not(:disabled) {
+  color: var(--color-accent);
+}
+.nav-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 .card .type-chip {
   display: inline-block;
   font-size: var(--text-xs);
