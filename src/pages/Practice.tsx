@@ -3,20 +3,21 @@ import { useTunes, useUpdateTune, useGradeTune } from "../hooks/useTunes";
 import { useSettings } from "../hooks/useSettings";
 import { useMetronome } from "../hooks/useMetronome";
 import {
+  completeTune,
   dueTunes,
   eligibleTunes,
   loadSession,
   pickNext,
   saveSession,
   sessionCap,
+  skipTune,
 } from "../lib/session";
-import { previewInterval } from "../lib/srs";
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
 import { ReferencePlayer } from "../components/ReferencePlayer";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
-  { g: "again", cls: "g-again", label: "Again" },
+  { g: "again", cls: "g-again", label: "Fail" },
   { g: "hard", cls: "g-hard", label: "Hard" },
   { g: "good", cls: "g-good", label: "Good" },
   { g: "easy", cls: "g-easy", label: "Easy" },
@@ -105,17 +106,26 @@ export function Practice() {
     metro.start(next.tempo, next.beats);
   }
 
+  // Every grade retires the tune from today's queue — Fail ("again") included:
+  // it drops the tempo and leaves the tune due today, but you don't repeat it
+  // today.
   function onGrade(g: Grade) {
     if (!activeLive) return;
     const t = activeLive;
     void gradeTuneMut(t, g, settings!);
-    if (g !== "again" && !session.done.includes(t.id)) {
-      const next = { ...session, done: [...session.done, t.id] };
-      setSession(next);
-      goToNext(t.id, next);
-    } else {
-      goToNext(g === "again" ? null : t.id);
-    }
+    const next = completeTune(session, t.id);
+    setSession(next);
+    goToNext(t.id, next);
+  }
+
+  // Skip leaves the tune's schedule, tempo and done count untouched; it only
+  // steps out of today's queue.
+  function onSkip() {
+    if (!activeLive) return;
+    const t = activeLive;
+    const next = skipTune(session, t.id);
+    setSession(next);
+    goToNext(t.id, next);
   }
 
   function nudgeTempo(t: Tune, d: number) {
@@ -212,14 +222,18 @@ export function Practice() {
         />
 
         {isLiveCard ? (
-          <div className="grades">
-            {GRADES.map(({ g, cls, label }) => (
-              <button key={g} className={cls} disabled={isRecording} onClick={() => onGrade(g)}>
-                {label}
-                <small>{previewInterval(t, g, settings!.targets)}</small>
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="grades">
+              {GRADES.map(({ g, cls, label }) => (
+                <button key={g} className={cls} disabled={isRecording} onClick={() => onGrade(g)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button className="big-btn secondary skip-btn" disabled={isRecording} onClick={onSkip}>
+              Skip
+            </button>
+          </>
         ) : (
           <button className="big-btn secondary" disabled={isRecording} onClick={goForward}>
             Back to current tune
@@ -243,17 +257,20 @@ export function Practice() {
   if (!activeLive) {
     if (eligible.length === 0) {
       const capped = due.length > 0;
+      const skipped = session.skipped.length;
+      const carriedOver = due.length + skipped;
+      const note = capped
+        ? `${carriedOver} tune${carriedOver === 1 ? "" : "s"} carry over to tomorrow.`
+        : skipped
+          ? `Nothing left in today's queue. ${skipped === 1 ? "1 skipped tune comes" : `${skipped} skipped tunes come`} back tomorrow.`
+          : "Nothing due. Come back tomorrow or add a new tune.";
       return (
         <>
           {stats}
           <div className="done-msg">
             <div className="orn" aria-hidden="true">* * *</div>
             <h3>{capped ? "Daily cap reached" : "All caught up"}</h3>
-            <p>
-              {capped
-                ? `${due.length} tune${due.length === 1 ? "" : "s"} carry over to tomorrow.`
-                : "Nothing due. Come back tomorrow or add a new tune."}
-            </p>
+            <p>{note}</p>
             {capped && (
               <button
                 className="big-btn secondary one-more"

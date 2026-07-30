@@ -9,15 +9,17 @@ import type { Session, Settings, Tune } from "./types";
 const SESSION_KEY = "tradTrainer.session.v1";
 
 export function freshSession(): Session {
-  return { date: todayStr(), served: [], done: [], extra: 0 };
+  return { date: todayStr(), served: [], done: [], skipped: [], extra: 0 };
 }
 
 export function loadSession(): Session {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (raw) {
-      const s = JSON.parse(raw) as Session;
-      if (s.date === todayStr()) return s;
+      const s = JSON.parse(raw) as Partial<Session>;
+      // Spread over a fresh session so a session stored by an older build
+      // (before `skipped`) still loads with every field present.
+      if (s.date === todayStr()) return { ...freshSession(), ...s };
     }
   } catch {
     /* ignore */
@@ -29,10 +31,31 @@ export function saveSession(s: Session): void {
   localStorage.setItem(SESSION_KEY, JSON.stringify(s));
 }
 
+/** Tunes still waiting in today's queue: due, not yet graded, not skipped. */
 export function dueTunes(tunes: Tune[], session: Session): Tune[] {
   const today = todayStr();
-  const done = new Set(session.done);
-  return tunes.filter((t) => t.due <= today && !done.has(t.id));
+  const retired = new Set([...session.done, ...session.skipped]);
+  return tunes.filter((t) => t.due <= today && !retired.has(t.id));
+}
+
+/**
+ * Set a tune aside for today. It keeps its grade, schedule and tempo, stays out
+ * of the done count, and releases the cap slot it took when it was served — a
+ * skip should cost nothing but the tune's place in today's queue.
+ */
+export function skipTune(session: Session, id: string): Session {
+  if (session.skipped.includes(id)) return session;
+  return {
+    ...session,
+    served: session.served.filter((s) => s !== id),
+    skipped: [...session.skipped, id],
+  };
+}
+
+/** Retire a tune from today's queue after it has been graded. */
+export function completeTune(session: Session, id: string): Session {
+  if (session.done.includes(id)) return session;
+  return { ...session, done: [...session.done, id] };
 }
 
 export function sessionCap(session: Session, settings: Settings): number {
@@ -41,7 +64,8 @@ export function sessionCap(session: Session, settings: Settings): number {
 
 /**
  * Due tunes we may still serve today, respecting the daily cap.
- * Tunes already served (e.g. graded Again) stay eligible past the cap.
+ * A tune already served but not yet graded stays eligible past the cap, so the
+ * live tune can't vanish mid-practice when the cap runs out.
  */
 export function eligibleTunes(tunes: Tune[], session: Session, settings: Settings): Tune[] {
   const served = new Set(session.served);

@@ -48,5 +48,7 @@ export interface Session {
   date: string;
   served: string[];
   done: string[];
+  /** Set aside for today: no grade, no schedule change, no cap slot used. */
+  skipped: string[];
   extra: number;
 }

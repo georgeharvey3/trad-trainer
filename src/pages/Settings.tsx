@@ -91,7 +91,7 @@ function SettingsForm({ initial }: { initial: SettingsType }) {
           </div>
         ))}
         <div className="set-note">
-          Grades nudge each tune's tempo: Easy +4, Good +2, Hard 0, Again &minus;8 &mdash; never above
+          Grades nudge each tune's tempo: Easy +4, Good +2, Hard 0, Fail &minus;8 &mdash; never above
           the type's target.
         </div>
       </div>

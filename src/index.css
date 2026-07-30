@@ -544,13 +544,6 @@ nav button.active::before { background: var(--color-accent); }
   white-space: nowrap;
   transition: transform var(--dur-micro) var(--ease-out);
 }
-.grades button small {
-  display: block;
-  font-weight: 500;
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  margin-top: var(--space-3xs);
-}
 .grades button:active { transform: translateY(1px); }
 .grades button:disabled { opacity: 0.5; cursor: not-allowed; }
 .g-again { background: var(--color-again-tint); color: var(--color-again); border-color: var(--color-again-border); }
@@ -583,6 +576,7 @@ nav button.active::before { background: var(--color-accent); }
 }
 .big-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .big-btn.one-more { max-width: 16rem; margin: var(--space-md) auto 0; }
+.big-btn.skip-btn { margin-top: var(--space-xs); font-size: var(--text-md); }
 
 /* ---- End-of-queue notes ---- */
 .done-msg {

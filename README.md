@@ -70,10 +70,18 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
 
 - **Practice tab** — tap *Start practice* and a random due tune is served; the
   metronome auto-starts at that tune's current tempo. Grade it:
-  - **Again** — relearn today, tempo −8 BPM
+  - **Fail** — schedule reset, tempo −8 BPM
   - **Hard** — interval ×1.2, tempo held
   - **Good** — interval grows (1d → 3d → ×ease), tempo +2 BPM
   - **Easy** — interval grows faster, tempo +4 BPM
+
+  The buttons show the label alone — the resulting interval and tempo change are
+  the algorithm's business, not something to read mid-tune. Every grade retires
+  the tune from today's queue, Fail included: it stays due (so it leads
+  tomorrow's queue) but you don't play it twice in one sitting.
+  **Skip** sets a tune aside instead — no grade, no schedule or tempo change, it
+  doesn't count as done and doesn't use a daily-cap slot. Skipped tunes come back
+  tomorrow.
 
   Tempo never exceeds the per-type target (Settings) and the −/+ buttons override
   it mid-practice. Grades and tempo changes persist to your account immediately.

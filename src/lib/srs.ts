@@ -100,14 +100,3 @@ export function gradeTune(tune: Tune, grade: Grade, targets: TargetMap): Tune {
   t.lastPracticed = todayStr();
   return t;
 }
-
-/** Human label for what a grade would do to this tune's schedule + tempo. */
-export function previewInterval(tune: Tune, grade: Grade, targets: TargetMap): string {
-  const g = gradeTune(tune, grade, targets);
-  const days = grade === "again" ? 0 : Math.max(1, Math.round(g.interval));
-  const when =
-    days === 0 ? "today" : days === 1 ? "1d" : days < 30 ? days + "d" : Math.round(days / 30) + "mo";
-  const delta = g.tempo - tune.tempo;
-  const dtxt = delta === 0 ? "" : (delta > 0 ? " +" : " ") + delta;
-  return when + dtxt;
-}
