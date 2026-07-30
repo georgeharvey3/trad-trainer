@@ -10,6 +10,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { overflow-x: clip; }
 html, body, #root { height: 100%; }
+/* Installed on a home screen there is no browser chrome to absorb these:
+ * the page-level rubber-band would bounce the whole shell (only <main> scrolls),
+ * and rotation would inflate body text. */
+html { -webkit-text-size-adjust: 100%; }
+html, body { overscroll-behavior-y: none; }
 
 body {
   background: var(--color-paper);
@@ -19,7 +24,9 @@ body {
   line-height: 1.5;
 }
 
-button { font-family: inherit; color: inherit; }
+/* No long-press callout or text selection on controls — a held tap should feel
+ * like a button press, not a web page. */
+button { font-family: inherit; color: inherit; -webkit-touch-callout: none; user-select: none; }
 input, select, textarea { font-family: inherit; }
 
 :focus { outline: none; }
