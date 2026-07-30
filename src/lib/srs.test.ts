@@ -55,7 +55,7 @@ describe("previewInterval", () => {
   it("labels the tempo delta and timing", () => {
     const t = makeTune({ tempo: 100 });
     expect(previewInterval(t, "good", DEFAULT_TARGETS)).toBe("1d +2");
-    expect(previewInterval(t, "again", DEFAULT_TARGETS)).toBe("today -8");
+    expect(previewInterval(t, "again", DEFAULT_TARGETS)).toBe("1d -8");
     expect(previewInterval(t, "hard", DEFAULT_TARGETS)).toBe("1d");
   });
 });

@@ -583,6 +583,14 @@ nav button.active::before { background: var(--color-accent); }
 }
 .big-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .big-btn.one-more { max-width: 16rem; margin: var(--space-md) auto 0; }
+.big-btn.skip-btn { margin-top: var(--space-xs); font-size: var(--text-md); }
+.big-btn.skip-btn small {
+  display: block;
+  font-weight: 500;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--space-3xs);
+}
 
 /* ---- End-of-queue notes ---- */
 .done-msg {
