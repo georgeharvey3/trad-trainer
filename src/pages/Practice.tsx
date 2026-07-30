@@ -12,13 +12,12 @@ import {
   sessionCap,
   skipTune,
 } from "../lib/session";
-import { previewInterval } from "../lib/srs";
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
 import { ReferencePlayer } from "../components/ReferencePlayer";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
-  { g: "again", cls: "g-again", label: "Again" },
+  { g: "again", cls: "g-again", label: "Fail" },
   { g: "hard", cls: "g-hard", label: "Hard" },
   { g: "good", cls: "g-good", label: "Good" },
   { g: "easy", cls: "g-easy", label: "Easy" },
@@ -107,8 +106,9 @@ export function Practice() {
     metro.start(next.tempo, next.beats);
   }
 
-  // Every grade retires the tune from today's queue — Again included: it drops
-  // the tempo and leaves the tune due today, but you don't repeat it today.
+  // Every grade retires the tune from today's queue — Fail ("again") included:
+  // it drops the tempo and leaves the tune due today, but you don't repeat it
+  // today.
   function onGrade(g: Grade) {
     if (!activeLive) return;
     const t = activeLive;
@@ -227,17 +227,11 @@ export function Practice() {
               {GRADES.map(({ g, cls, label }) => (
                 <button key={g} className={cls} disabled={isRecording} onClick={() => onGrade(g)}>
                   {label}
-                  <small>{previewInterval(t, g, settings!.targets)}</small>
                 </button>
               ))}
             </div>
-            <button
-              className="big-btn secondary skip-btn"
-              disabled={isRecording}
-              onClick={onSkip}
-            >
+            <button className="big-btn secondary skip-btn" disabled={isRecording} onClick={onSkip}>
               Skip
-              <small>no grade, no schedule change</small>
             </button>
           </>
         ) : (

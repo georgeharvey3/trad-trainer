@@ -100,17 +100,3 @@ export function gradeTune(tune: Tune, grade: Grade, targets: TargetMap): Tune {
   t.lastPracticed = todayStr();
   return t;
 }
-
-/**
- * Human label for what a grade would do to this tune's schedule + tempo.
- * Again leaves the tune due today, but today's queue won't re-serve it, so the
- * soonest it comes back around is tomorrow — that's what the label promises.
- */
-export function previewInterval(tune: Tune, grade: Grade, targets: TargetMap): string {
-  const g = gradeTune(tune, grade, targets);
-  const days = grade === "again" ? 1 : Math.max(1, Math.round(g.interval));
-  const when = days === 1 ? "1d" : days < 30 ? days + "d" : Math.round(days / 30) + "mo";
-  const delta = g.tempo - tune.tempo;
-  const dtxt = delta === 0 ? "" : (delta > 0 ? " +" : " ") + delta;
-  return when + dtxt;
-}

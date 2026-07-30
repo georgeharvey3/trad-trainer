@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TARGETS, freshTuneFields, gradeTune, previewInterval } from "./srs";
+import { DEFAULT_TARGETS, freshTuneFields, gradeTune } from "./srs";
 import { addDays, todayStr } from "./dates";
 import type { Tune } from "./types";
 
@@ -48,14 +48,5 @@ describe("gradeTune", () => {
     gradeTune(t, "good", DEFAULT_TARGETS);
     expect(t.tempo).toBe(100);
     expect(t.reps).toBe(0);
-  });
-});
-
-describe("previewInterval", () => {
-  it("labels the tempo delta and timing", () => {
-    const t = makeTune({ tempo: 100 });
-    expect(previewInterval(t, "good", DEFAULT_TARGETS)).toBe("1d +2");
-    expect(previewInterval(t, "again", DEFAULT_TARGETS)).toBe("1d -8");
-    expect(previewInterval(t, "hard", DEFAULT_TARGETS)).toBe("1d");
   });
 });
