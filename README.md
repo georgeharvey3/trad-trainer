@@ -97,6 +97,30 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
   slip jig 9/8 → 3, waltz 3, polka 2) and are editable per tune.
 - **Tunes tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
 
+## Installing it on a phone
+
+The app ships a web app manifest (`public/manifest.webmanifest`, `display:
+standalone`) plus the `apple-*` metas for older iOS, so adding it to a home
+screen gives a full-screen app with no address bar or browser toolbar.
+
+**On iPhone/iPad it must be added from Safari.** Chrome (and Firefox, and
+Edge) on iOS can only create a bookmark shortcut that reopens *in that browser*,
+chrome and all — that's an iOS restriction, not something the site can change.
+Open the site in **Safari** → Share → **Add to Home Screen**.
+
+On Android, Chrome's *Install app* / *Add to Home screen* does produce a
+standalone window.
+
+Two things to expect on iOS:
+
+- A home-screen app has its own storage jar, separate from Safari's, so you sign
+  in once more the first time you open it.
+- There's no service worker, so the app still needs a connection — it talks to
+  Supabase for every read and write anyway.
+
+Icons live in [`public/`](./public) (`apple-touch-icon.png` is the one iOS uses;
+`icon-192`/`icon-512`/`icon-maskable-512` and `icon.svg` cover everything else).
+
 ## Architecture
 
 ```
