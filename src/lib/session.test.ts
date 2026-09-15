@@ -6,6 +6,7 @@ import {
   eligibleTunes,
   freshSession,
   pickNext,
+  practiceOrder,
   skipTune,
 } from "./session";
 import { freshTuneFields } from "./srs";
@@ -116,5 +117,76 @@ describe("dueTunes", () => {
   it("only counts tunes due on or before today", () => {
     const tunes = [makeTune("a"), makeTune("b", { due: addDays(todayStr(), 3) })];
     expect(dueTunes(tunes, freshSession()).map((t) => t.id)).toEqual(["a"]);
+  });
+});
+
+describe("practiceOrder", () => {
+  const ids = ["a", "b", "c", "d", "e"];
+
+  it("puts the most overdue tunes first", () => {
+    const tunes = [
+      makeTune("today", { due: todayStr() }),
+      makeTune("week", { due: addDays(todayStr(), -7) }),
+      makeTune("yesterday", { due: addDays(todayStr(), -1) }),
+    ];
+    expect(practiceOrder(tunes).map((t) => t.id)).toEqual(["week", "yesterday", "today"]);
+  });
+
+  it("breaks ties the same way however the tunes arrive", () => {
+    // Same due date for all, so every tune is tied on priority: the order must
+    // come out identical whatever order the server hands them back in.
+    const tunes = ids.map((id) => makeTune(id));
+    const shuffled = [...tunes].reverse();
+    expect(practiceOrder(shuffled).map((t) => t.id)).toEqual(practiceOrder(tunes).map((t) => t.id));
+  });
+
+  it("gives the same order every time within a day", () => {
+    const tunes = ids.map((id) => makeTune(id));
+    const first = practiceOrder(tunes, "2026-09-15").map((t) => t.id);
+    // Re-opening the app is just another call with the same day seed.
+    expect(practiceOrder(tunes, "2026-09-15").map((t) => t.id)).toEqual(first);
+    expect(practiceOrder(tunes, "2026-09-15").map((t) => t.id)).toEqual(first);
+  });
+
+  it("reshuffles tied tunes on a different day", () => {
+    const tunes = ids.map((id) => makeTune(id));
+    const mon = practiceOrder(tunes, "2026-09-15").map((t) => t.id);
+    const tue = practiceOrder(tunes, "2026-09-16").map((t) => t.id);
+    expect(tue).not.toEqual(mon);
+    expect([...tue].sort()).toEqual([...mon].sort());
+  });
+
+  it("leaves the caller's array alone", () => {
+    const tunes = ids.map((id) => makeTune(id));
+    practiceOrder(tunes);
+    expect(tunes.map((t) => t.id)).toEqual(ids);
+  });
+});
+
+describe("pickNext", () => {
+  it("serves the top of the queue, not a random tune", () => {
+    const tunes = [
+      makeTune("today", { due: todayStr() }),
+      makeTune("overdue", { due: addDays(todayStr(), -5) }),
+    ];
+    expect(pickNext(tunes, freshSession(), settings, null)?.id).toBe("overdue");
+  });
+
+  it("serves the same tune on every fresh start of the day", () => {
+    const tunes = ["a", "b", "c", "d", "e"].map((id) => makeTune(id));
+    // Closing and reopening the app starts from a fresh session again.
+    const first = pickNext(tunes, freshSession(), settings, null)?.id;
+    expect(pickNext(tunes, freshSession(), settings, null)?.id).toBe(first);
+    expect(pickNext([...tunes].reverse(), freshSession(), settings, null)?.id).toBe(first);
+  });
+
+  it("works down the queue as tunes are graded", () => {
+    const tunes = ["a", "b", "c"].map((id) => makeTune(id));
+    const order = practiceOrder(tunes).map((t) => t.id);
+    const first = pickNext(tunes, freshSession(), settings, null)!;
+    expect(first.id).toBe(order[0]);
+
+    const after = completeTune(freshSession(), first.id);
+    expect(pickNext(tunes, after, settings, first.id)?.id).toBe(order[1]);
   });
 });

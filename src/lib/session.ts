@@ -31,11 +31,45 @@ export function saveSession(s: Session): void {
   localStorage.setItem(SESSION_KEY, JSON.stringify(s));
 }
 
-/** Tunes still waiting in today's queue: due, not yet graded, not skipped. */
+/**
+ * Stable 32-bit FNV-1a hash. Used to break ties in the practice order without
+ * any randomness, so every device and every app launch agrees on the order.
+ */
+function hash32(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Today's practice order: highest priority first, where priority is how
+ * overdue a tune is (earliest `due` first). Tunes on the same due date are
+ * tied, and the tie is broken by a hash of the tune id seeded with the day —
+ * fixed for the whole day, so reopening the app serves the same tunes in the
+ * same order, but reshuffled tomorrow so no tune is stuck at the back.
+ */
+export function practiceOrder(tunes: Tune[], seed: string = todayStr()): Tune[] {
+  return [...tunes].sort((a, b) => {
+    if (a.due !== b.due) return a.due < b.due ? -1 : 1;
+    const ha = hash32(`${seed}:${a.id}`);
+    const hb = hash32(`${seed}:${b.id}`);
+    if (ha !== hb) return ha - hb;
+    // Same hash (vanishingly rare): fall back to the id so the sort is total.
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
+}
+
+/**
+ * Tunes still waiting in today's queue: due, not yet graded, not skipped.
+ * Returned in today's practice order (see `practiceOrder`).
+ */
 export function dueTunes(tunes: Tune[], session: Session): Tune[] {
   const today = todayStr();
   const retired = new Set([...session.done, ...session.skipped]);
-  return tunes.filter((t) => t.due <= today && !retired.has(t.id));
+  return practiceOrder(tunes.filter((t) => t.due <= today && !retired.has(t.id)));
 }
 
 /**
@@ -82,6 +116,10 @@ export function eligibleTunes(
   return dueTunes(tunes, session).filter((t) => t.id === liveId || left > 0);
 }
 
+/**
+ * The next tune to serve: the top of today's queue. The queue is ordered, not
+ * shuffled, so a session interrupted and resumed picks up where it left off.
+ */
 export function pickNext(
   tunes: Tune[],
   session: Session,
@@ -91,5 +129,5 @@ export function pickNext(
   const all = eligibleTunes(tunes, session, settings);
   const pool = all.filter((t) => t.id !== excludeId);
   if (pool.length === 0) return all.length ? all[0] : null;
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[0];
 }
