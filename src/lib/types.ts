@@ -46,7 +46,7 @@ export interface Settings {
 /** Per-device, per-day practice queue state (not synced). */
 export interface Session {
   date: string;
-  served: string[];
+  /** Graded today. One cap slot each — nothing else spends the cap. */
   done: string[];
   /** Set aside for today: no grade, no schedule change, no cap slot used. */
   skipped: string[];

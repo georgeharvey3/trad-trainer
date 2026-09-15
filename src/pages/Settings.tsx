@@ -67,7 +67,8 @@ function SettingsForm({ initial }: { initial: SettingsType }) {
           />
         </div>
         <div className="set-note">
-          At most this many distinct tunes are served per day; the rest of the due queue carries over.
+          At most this many tunes are graded per day; the rest of the due queue carries over. Opening
+          a tune costs nothing &mdash; a slot is only used when you grade it.
         </div>
       </div>
 
