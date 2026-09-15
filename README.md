@@ -83,6 +83,10 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
   doesn't count as done and doesn't use a daily-cap slot. Skipped tunes come back
   tomorrow.
 
+  The daily cap is spent by grading, not by being served: a tune you open and
+  walk away from costs nothing, so closing the app mid-tune leaves *cap left*
+  where it was and the tune stays in today's queue.
+
   Tempo never exceeds the per-type target (Settings) and the −/+ buttons override
   it mid-practice. Grades and tempo changes persist to your account immediately.
 - **Recordings** — each tune can hold one audio recording. Recording uses the

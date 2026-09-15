@@ -3,13 +3,13 @@ import { useTunes, useUpdateTune, useGradeTune } from "../hooks/useTunes";
 import { useSettings } from "../hooks/useSettings";
 import { useMetronome } from "../hooks/useMetronome";
 import {
+  capLeft as capLeftFor,
   completeTune,
   dueTunes,
   eligibleTunes,
   loadSession,
   pickNext,
   saveSession,
-  sessionCap,
   skipTune,
 } from "../lib/session";
 import type { Grade, Session, Tune } from "../lib/types";
@@ -46,12 +46,13 @@ export function Practice() {
   };
 
   const due = useMemo(() => (settings ? dueTunes(tunes, session) : []), [tunes, session, settings]);
-  const eligible = useMemo(
-    () => (settings ? eligibleTunes(tunes, session, settings) : []),
-    [tunes, session, settings],
-  );
 
   const liveId = visited.length ? visited[visited.length - 1] : null;
+  const eligible = useMemo(
+    () => (settings ? eligibleTunes(tunes, session, settings, liveId) : []),
+    [tunes, session, settings, liveId],
+  );
+
   const live = tunes.find((t) => t.id === liveId) ?? null;
   const liveEligible = live && eligible.some((t) => t.id === live.id);
   const activeLive = liveEligible ? live : null;
@@ -74,7 +75,9 @@ export function Practice() {
   }
 
   const doneCount = session.done.length;
-  const capLeft = Math.max(0, sessionCap(session, settings) - session.served.length);
+  // Slots left to spend. Only grading a tune spends one, so a tune opened and
+  // abandoned (app closed mid-practice) leaves the cap exactly where it was.
+  const capLeft = capLeftFor(session, settings);
 
   function goBack() {
     metro.stop();
@@ -99,9 +102,7 @@ export function Practice() {
     }
     setVisited((v) => [...v, next.id]);
     setCursor(visited.length);
-    if (!sess.served.includes(next.id)) {
-      setSession({ ...sess, served: [...sess.served, next.id] });
-    }
+    // Serving costs nothing: the session only changes when the tune is graded.
     // Auto-start the metronome for the new tune (this runs from a user gesture).
     metro.start(next.tempo, next.beats);
   }
@@ -275,9 +276,11 @@ export function Practice() {
               <button
                 className="big-btn secondary one-more"
                 onClick={() => {
+                  // Pass `s` through: goToNext's default would use the stale
+                  // session and not see the extra slot we just granted.
                   const s = { ...session, extra: (session.extra || 0) + 1 };
                   setSession(s);
-                  goToNext(null);
+                  goToNext(null, s);
                 }}
               >
                 Practice one more anyway
