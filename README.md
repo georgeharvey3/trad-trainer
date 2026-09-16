@@ -85,7 +85,8 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
 
   The daily cap is spent by grading, not by being served: a tune you open and
   walk away from costs nothing, so closing the app mid-tune leaves *cap left*
-  where it was and the tune stays in today's queue.
+  where it was and the tune stays in today's queue. *Cap left* only ever counts
+  down — once it reaches 0 nothing puts it back up for the rest of the day.
 
   Tempo never exceeds the per-type target (Settings) and the −/+ buttons override
   it mid-practice. Grades and tempo changes persist to your account immediately.
@@ -94,8 +95,10 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
   (`<user_id>/<tune_id>`) and plays back via a short-lived signed URL. Recording
   is **mutually exclusive with the metronome** — starting one stops the other.
 - **Daily cap** — at most N distinct tunes per day (default 10); the rest of the
-  due queue carries over. "Practice one more anyway" extends today only. The daily
-  queue is per-device; the durable schedule is synced.
+  due queue carries over. "Practice one more anyway" serves a single bonus tune
+  for today only; it's practice past the cap, so *cap left* stays at 0 rather
+  than ticking back up. The daily queue is per-device; the durable schedule is
+  synced.
 - **Metronome** — Web Audio lookahead scheduler; the first pulse of each bar is
   accented. Pulses per bar come from the tune type (reel 4, jig 6/8 → 2,
   slip jig 9/8 → 3, waltz 3, polka 2) and are editable per tune.

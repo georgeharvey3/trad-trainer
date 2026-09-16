@@ -75,8 +75,9 @@ export function Practice() {
   }
 
   const doneCount = session.done.length;
-  // Slots left to spend. Only grading a tune spends one, so a tune opened and
-  // abandoned (app closed mid-practice) leaves the cap exactly where it was.
+  // The daily cap still to spend. Only grading a tune spends a slot, so a tune
+  // opened and abandoned (app closed mid-practice) leaves the cap exactly where
+  // it was — and bonus tunes from "one more anyway" never put it back up.
   const capLeft = capLeftFor(session, settings);
 
   function goBack() {
@@ -276,6 +277,8 @@ export function Practice() {
               <button
                 className="big-btn secondary one-more"
                 onClick={() => {
+                  // A bonus slot on top of the day's cap — `capLeft` ignores it,
+                  // so the cap stays at 0 while you practise past it.
                   // Pass `s` through: goToNext's default would use the stale
                   // session and not see the extra slot we just granted.
                   const s = { ...session, extra: (session.extra || 0) + 1 };

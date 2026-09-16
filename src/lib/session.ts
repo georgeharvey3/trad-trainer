@@ -93,11 +93,26 @@ export function sessionCap(session: Session, settings: Settings): number {
 }
 
 /**
- * Cap slots still open today. Only a graded tune spends a slot, so opening a
- * tune and walking away costs nothing: nothing is charged until you press a
- * grade button, and that same press is what counts the tune as done.
+ * How much of the *daily cap* is left today — the number shown as "cap left".
+ * Only a graded tune spends a slot, so opening a tune and walking away costs
+ * nothing: nothing is charged until you press a grade button, and that same
+ * press is what counts the tune as done.
+ *
+ * Bonus slots from "Practice one more anyway" are deliberately not counted
+ * here. `done` only ever grows, so once this reaches 0 it stays 0 for the rest
+ * of the day: going past the cap is extra practice, not the cap being handed
+ * back.
  */
 export function capLeft(session: Session, settings: Settings): number {
+  return Math.max(0, settings.dailyCap - session.done.length);
+}
+
+/**
+ * Tunes we may still serve today: what's left of the daily cap plus any bonus
+ * slots granted by "Practice one more anyway". This is the serving budget, not
+ * the figure on screen — see `capLeft`.
+ */
+export function slotsLeft(session: Session, settings: Settings): number {
   return Math.max(0, sessionCap(session, settings) - session.done.length);
 }
 
@@ -112,7 +127,7 @@ export function eligibleTunes(
   settings: Settings,
   liveId: string | null = null,
 ): Tune[] {
-  const left = capLeft(session, settings);
+  const left = slotsLeft(session, settings);
   return dueTunes(tunes, session).filter((t) => t.id === liveId || left > 0);
 }
 
