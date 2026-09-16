@@ -8,6 +8,7 @@ import {
   pickNext,
   practiceOrder,
   skipTune,
+  slotsLeft,
 } from "./session";
 import { freshTuneFields } from "./srs";
 import { addDays, todayStr } from "./dates";
@@ -108,8 +109,23 @@ describe("the daily cap", () => {
     expect(eligibleTunes(tunes, spent, settings)).toEqual([]);
 
     const oneMore = { ...spent, extra: 1 };
-    expect(capLeft(oneMore, settings)).toBe(1);
+    expect(slotsLeft(oneMore, settings)).toBe(1);
     expect(eligibleTunes(tunes, oneMore, settings).map((t) => t.id)).toEqual(["c"]);
+  });
+
+  it("stays spent once it hits zero, however many extras are granted", () => {
+    // "Practice one more anyway" is practice past the cap, not the cap coming
+    // back: the figure on screen must not tick up from 0 to 1 on the click.
+    const spent: Session = completeTune(completeTune(freshSession(), "a"), "b");
+    expect(capLeft(spent, settings)).toBe(0);
+
+    const oneMore = { ...spent, extra: 1 };
+    expect(capLeft(oneMore, settings)).toBe(0);
+
+    // Grading the bonus tune, then taking another, keeps it at 0 too.
+    const graded = completeTune(oneMore, "c");
+    expect(capLeft(graded, settings)).toBe(0);
+    expect(capLeft({ ...graded, extra: 2 }, settings)).toBe(0);
   });
 });
 
