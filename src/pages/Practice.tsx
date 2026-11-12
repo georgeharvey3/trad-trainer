@@ -220,7 +220,7 @@ export function Practice() {
           <AbcPlayer
             key={t.id}
             libraryTuneId={t.libraryTuneId}
-            initialTempo={t.tempo}
+            type={t.type}
             beats={t.beats}
             disabled={isRecording}
             onPlay={() => metro.stop()}

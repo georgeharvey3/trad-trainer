@@ -4,7 +4,6 @@ import { formatKey, libraryView, type LibrarySort } from "../lib/library";
 import { TUNE_TYPES, type LibraryTune } from "../lib/types";
 import { Pager } from "../components/Pager";
 import { AbcPlayer } from "../components/AbcPlayer";
-import { LEARN_TEMPOS } from "../lib/srs";
 import { pageSlice } from "../lib/paging";
 import { copy } from "../copy";
 
@@ -134,7 +133,7 @@ export function Library() {
               </div>
             </div>
             {previewId === t.id && (
-              <AbcPlayer libraryTuneId={t.id} initialTempo={LEARN_TEMPOS[t.type] || 100} />
+              <AbcPlayer libraryTuneId={t.id} type={t.type} />
             )}
           </Fragment>
         ))}

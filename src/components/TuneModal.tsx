@@ -150,7 +150,7 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
       {tune?.libraryTuneId && (
         <AbcPlayer
           libraryTuneId={tune.libraryTuneId}
-          initialTempo={tune.tempo}
+          type={tune.type}
           beats={tune.beats}
           disabled={isRecording}
         />

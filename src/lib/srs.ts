@@ -95,10 +95,15 @@ export function freshTuneFields(input: NewTuneInput) {
   };
 }
 
+/** The target tempo of a tune type: the ceiling of the tempo ladder. */
+export function targetTempo(targets: TargetMap, type: string): number {
+  return targets[type] || 200;
+}
+
 /** Returns a copy of the tune with schedule + tempo updated for the grade. */
 export function gradeTune(tune: Tune, grade: Grade, targets: TargetMap): Tune {
   const t: Tune = { ...tune };
-  const target = targets[t.type] || 200;
+  const target = targetTempo(targets, t.type);
   const clampTempo = (v: number) => Math.min(target, Math.max(TEMPO_FLOOR, v));
   t.ease = t.ease || 2.5;
 

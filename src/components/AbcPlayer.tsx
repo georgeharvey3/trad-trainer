@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import * as abcjs from "abcjs";
 import { useLibraryTune } from "../hooks/useTunes";
+import { useSettings } from "../hooks/useSettings";
+import { targetTempo } from "../lib/srs";
+import type { LibraryTune } from "../lib/types";
 import { tuneAbc } from "../lib/abc";
 import { abcPlayback } from "../lib/abcPlayback";
 import { copy } from "../copy";
@@ -12,8 +15,8 @@ const TEMPO_SETTLE_MS = 300;
 interface Props {
   /** The Library tune to play. Its `abc` is read when the player mounts. */
   libraryTuneId: string;
-  /** Start value of the tempo slider, in metronome beats a minute. */
-  initialTempo: number;
+  /** Tune type whose target tempo is the start value of the tempo slider. */
+  type: string;
   /** Metronome beats to the bar of the Repertoire tune. Without it, the beats of the type. */
   beats?: number;
   /** True while the recorder runs: playback is off then. */
@@ -23,8 +26,26 @@ interface Props {
 }
 
 /** Notation of a Library tune, with playback that highlights each note. */
-export function AbcPlayer({ libraryTuneId, initialTempo, beats, disabled = false, onPlay }: Props) {
+export function AbcPlayer({ libraryTuneId, type, ...rest }: Props) {
   const tuneQ = useLibraryTune(libraryTuneId);
+  const settingsQ = useSettings();
+
+  if (tuneQ.isError) return <div className="abc-status">{copy.abcPlayer.loadFailed}</div>;
+  const tune = tuneQ.data;
+  const settings = settingsQ.data;
+  if (!tune || !settings) return <div className="abc-status">{copy.abcPlayer.loading}</div>;
+  if (!tune.abc) return <div className="abc-status">{copy.abcPlayer.noAbc}</div>;
+
+  return <Player tune={tune} initialTempo={targetTempo(settings.targets, type)} {...rest} />;
+}
+
+interface PlayerProps extends Omit<Props, "libraryTuneId" | "type"> {
+  tune: LibraryTune;
+  /** Start value of the tempo slider, in metronome beats a minute. */
+  initialTempo: number;
+}
+
+function Player({ tune, initialTempo, beats, disabled = false, onPlay }: PlayerProps) {
   const [tempo, setTempo] = useState(initialTempo);
   const [settledTempo, setSettledTempo] = useState(initialTempo);
   const [error, setError] = useState(false);
@@ -43,9 +64,8 @@ export function AbcPlayer({ libraryTuneId, initialTempo, beats, disabled = false
     return () => clearTimeout(id);
   }, [tempo]);
 
-  const tune = tuneQ.data;
   const abc = useMemo(
-    () => (tune?.abc ? tuneAbc({ ...tune, abc: tune.abc }, settledTempo, beats) : null),
+    () => (tune.abc ? tuneAbc({ ...tune, abc: tune.abc }, settledTempo, beats) : null),
     [tune, settledTempo, beats],
   );
 
@@ -74,10 +94,6 @@ export function AbcPlayer({ libraryTuneId, initialTempo, beats, disabled = false
     onPlay?.();
     abcPlayback.start(visual, self).catch(() => setError(true));
   }
-
-  if (tuneQ.isError) return <div className="abc-status">{copy.abcPlayer.loadFailed}</div>;
-  if (!tune) return <div className="abc-status">{copy.abcPlayer.loading}</div>;
-  if (!tune.abc) return <div className="abc-status">{copy.abcPlayer.noAbc}</div>;
 
   return (
     <div className="abc-player">
