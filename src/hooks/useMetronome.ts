@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { metronome } from "../lib/metronome";
+import { abcPlayback } from "../lib/abcPlayback";
 
 /**
  * Binds the shared metronome singleton to React. Returns the running state,
@@ -33,7 +34,11 @@ export function useMetronome() {
   return {
     running,
     beat,
-    start: (bpm: number, beats: number) => metronome.start(bpm, beats),
+    // The metronome and ABC playback never run at the same time.
+    start: (bpm: number, beats: number) => {
+      abcPlayback.stop();
+      metronome.start(bpm, beats);
+    },
     stop: () => metronome.stop(),
     setBpm: (bpm: number) => metronome.setBpm(bpm),
   };

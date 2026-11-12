@@ -6,6 +6,8 @@ import { useSaveRecording } from "../hooks/useRecording";
 import type { Recording } from "../lib/recorder";
 import { isYouTubeUrl } from "../lib/youtube";
 import { Recorder } from "./Recorder";
+import { AbcPlayer } from "./AbcPlayer";
+import { abcPlayback } from "../lib/abcPlayback";
 
 interface Props {
   open: boolean;
@@ -145,12 +147,20 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
           onChange={(e) => setReferenceUrl(e.target.value)}
         />
       </div>
+      {tune?.libraryTuneId && (
+        <AbcPlayer
+          libraryTuneId={tune.libraryTuneId}
+          type={tune.type}
+          beats={tune.beats}
+          disabled={isRecording}
+        />
+      )}
       {tune ? (
         <Recorder
           mode="saved"
           tune={tune}
           metronomeRunning={false}
-          onRecordingStart={() => {}}
+          onRecordingStart={() => abcPlayback.stop()}
           onRecordingChange={setIsRecording}
         />
       ) : (
