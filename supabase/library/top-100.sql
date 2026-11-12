@@ -101,8 +101,4 @@ insert into public.library (session_id, name, type, key, tunebooks) values
   (18, 'The Concertina', 'Reel', 'Dmajor', 1495),
   (957, 'Fanny Power', 'Waltz', 'Gmajor', 1490),
   (829, 'The Hag At The Churn', 'Jig', 'Dmixolydian', 1489)
-on conflict (session_id) do update set
-  name = excluded.name,
-  type = excluded.type,
-  key = excluded.key,
-  tunebooks = excluded.tunebooks;
+on conflict (session_id) do update set tunebooks = excluded.tunebooks;

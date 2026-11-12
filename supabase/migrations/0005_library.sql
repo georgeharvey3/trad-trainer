@@ -10,7 +10,10 @@ create table if not exists public.library (
   id          uuid primary key default gen_random_uuid(),
   session_id  integer not null unique,
   name        text not null,
-  type        text not null,
+  type        text not null check (type in (
+                'Reel', 'Jig', 'Slip Jig', 'Waltz', 'Hornpipe', 'Polka', 'Slide',
+                'Barndance', 'Strathspey', 'Mazurka', 'Three-Two', 'March'
+              )),
   -- Key of the first setting, as The Session gives it (`Gmajor`).
   key         text not null,
   -- Number of tunebooks that hold the tune. Gives the popularity rank.
@@ -29,7 +32,10 @@ create policy "library is readable by signed-in users"
 alter table public.tunes
   add column if not exists library_tune_id uuid references public.library (id) on delete set null;
 
-create index if not exists tunes_user_library_idx on public.tunes (user_id, library_tune_id);
+-- One Repertoire tune per Library tune for each user.
+create unique index if not exists tunes_user_library_key
+  on public.tunes (user_id, library_tune_id)
+  where library_tune_id is not null;
 
 -- Split the combined "Hornpipe/Slow Reel/Polka" target in each profile into
 -- "Hornpipe" and "Polka". A target the user already set stays.

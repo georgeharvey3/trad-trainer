@@ -37,7 +37,7 @@ function AppShell() {
   return (
     <>
       <header>
-        <h1>Trad Trainer</h1>
+        <h1>{copy.app.title}</h1>
         <span className="sub">{copy.app.tuneCount(count)}</span>
         <span className="spacer" />
         <button className="signout" onClick={() => void signOut()}>

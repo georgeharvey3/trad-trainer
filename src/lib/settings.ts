@@ -3,7 +3,7 @@ import type { Settings, TargetMap } from "./types";
 
 const LEGACY_HORNPIPE_POLKA = "Hornpipe/Slow Reel/Polka";
 
-export const DEFAULT_SETTINGS: Settings = { dailyCap: 10, targets: { ...DEFAULT_TARGETS } };
+const DEFAULT_SETTINGS: Settings = { dailyCap: 10, targets: { ...DEFAULT_TARGETS } };
 
 /**
  * Fill a stored profile's settings with defaults. The old combined

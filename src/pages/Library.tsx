@@ -17,6 +17,7 @@ export function Library() {
   const [key, setKey] = useState("");
   const [page, setPage] = useState(1);
   const [adding, setAdding] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const library = useMemo(() => libraryQ.data ?? [], [libraryQ.data]);
   // A tune is in the Repertoire only through `library_tune_id`, never by title.
@@ -41,9 +42,21 @@ export function Library() {
 
   function add(t: LibraryTune) {
     setAdding(t.id);
-    addTune.mutate(libraryTuneInput(t), { onSettled: () => setAdding(null) });
+    setAddError(null);
+    addTune.mutate(libraryTuneInput(t), {
+      onError: (e) => {
+        // 23505 = unique_violation: an unlinked Repertoire tune already has this
+        // title and type (before the backfill links it).
+        const code = (e as { code?: string } | null)?.code;
+        setAddError(code === "23505" ? copy.library.addDuplicate(t.name) : copy.library.addFailed);
+      },
+      onSettled: () => setAdding(null),
+    });
   }
 
+  if (libraryQ.isError) {
+    return <div className="center-note">{copy.library.loadFailed}</div>;
+  }
   if (libraryQ.isSuccess && library.length === 0) {
     return <div className="center-note">{copy.library.empty}</div>;
   }
@@ -88,7 +101,7 @@ export function Library() {
         </select>
       </div>
       <div className="tune-count">{copy.library.count(list.length, library.length)}</div>
-      {addTune.isError && <div className="error-note">{copy.library.addFailed}</div>}
+      {addError && <div className="error-note">{addError}</div>}
       <div>
         {items.map((t) => (
           <div key={t.id} className="tune-row library-row">

@@ -6,8 +6,7 @@ const quote = (s: string) => `'${s.replace(/'/g, "''")}'`;
 
 /**
  * SQL that upserts the tunes into `public.library`. A second run does not
- * make duplicates: it refreshes the Session fields of each existing row.
- * Repertoire tunes are copies (ADR 0001), so a refresh does not change them.
+ * make duplicates: it refreshes only `tunebooks` of each existing row.
  */
 export function buildLibrarySql(tunes: IngestTune[]): string {
   const rows = tunes.map(
@@ -19,11 +18,7 @@ export function buildLibrarySql(tunes: IngestTune[]): string {
     "-- Run in the Supabase SQL editor.",
     "insert into public.library (session_id, name, type, key, tunebooks) values",
     rows.join(",\n"),
-    "on conflict (session_id) do update set",
-    "  name = excluded.name,",
-    "  type = excluded.type,",
-    "  key = excluded.key,",
-    "  tunebooks = excluded.tunebooks;",
+    "on conflict (session_id) do update set tunebooks = excluded.tunebooks;",
     "",
   ].join("\n");
 }
