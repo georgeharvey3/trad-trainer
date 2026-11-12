@@ -32,7 +32,7 @@ reference.
    - `0005_library.sql` — the read-only `library` table and the
      `library_tune_id` link on `tunes`.
 
-   Then run [`supabase/library/top-100.sql`](./supabase/library/top-100.sql) to
+   Then run [`supabase/library/top-200.sql`](./supabase/library/top-200.sql) to
    fill the Library.
 
    > Using the Supabase CLI instead? `supabase db push` applies all migrations.
@@ -63,11 +63,11 @@ or add your own tunes in the Repertoire tab.
 
 ### Refresh the Library
 
-The Library holds the top 100 tunes of [The Session](https://thesession.org).
+The Library holds the top 200 tunes of [The Session](https://thesession.org).
 
 1. Run `node scripts/ingest-library.ts`. The script writes
-   `supabase/library/top-100.sql`. It does not write to the database.
-2. Run `supabase/library/top-100.sql` in the Supabase SQL editor.
+   `supabase/library/top-200.sql`. It does not write to the database.
+2. Run `supabase/library/top-200.sql` in the Supabase SQL editor.
 
 A second run does not make duplicates. It refreshes the popularity of each tune.
 
@@ -119,7 +119,7 @@ A second run does not make duplicates. It refreshes the popularity of each tune.
   accented. Pulses per bar come from the tune type (reel 4, jig 6/8 → 2,
   slip jig 9/8 → 3, waltz 3, hornpipe and polka 4) and are editable per tune.
 - **Repertoire tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
-- **Library tab** — the top 100 tunes of The Session. Search by name, sort by
+- **Library tab** — the top 200 tunes of The Session. Search by name, sort by
   popularity or title, and filter by type or key. "Add" copies a tune into the
   Repertoire.
 

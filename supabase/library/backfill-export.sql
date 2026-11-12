@@ -1,5 +1,5 @@
 -- Backfill step 1: export the Repertoire with candidate Library matches.
--- Run in the Supabase SQL editor after `top-100.sql`. It reads only.
+-- Run in the Supabase SQL editor after `top-200.sql`. It reads only.
 --
 -- Each `tunes` row gets the Library tune whose simplified name is the same
 -- (lower case, no leading "the", letters and digits only), or nulls. Titles

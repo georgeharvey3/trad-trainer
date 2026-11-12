@@ -1,7 +1,7 @@
 -- Library: the shared list of tunes ingested from The Session.
 -- The Library is the same for every user. Signed-in users can read it; no
 -- client can write to it. `scripts/ingest-library.ts` writes the rows as a SQL
--- file (`supabase/library/top-100.sql`) to run in the SQL editor.
+-- file (`supabase/library/top-200.sql`) to run in the SQL editor.
 --
 -- A Repertoire tune (`tunes` row) copies its Library tune and keeps a link in
 -- `library_tune_id`. See docs/adr/0001-repertoire-copies-library-tunes.md.
