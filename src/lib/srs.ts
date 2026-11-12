@@ -6,15 +6,24 @@ import { addDays, todayStr } from "./dates";
 import type { Grade, TargetMap, Tune, TuneType } from "./types";
 
 // Ceiling the tempo ladder climbs toward (editable in Settings).
-// The legacy "Jig/Slip Jig" key is kept as a fallback for any tune rows not
-// yet migrated to the split "Jig" / "Slip Jig" types (see migration 0003).
+// The legacy "Jig/Slip Jig" and "Hornpipe/Slow Reel/Polka" keys stay as a
+// fallback for tune rows not yet moved to the split types (migration 0004
+// and the Library backfill).
 export const DEFAULT_TARGETS: TargetMap = {
   Reel: 220,
   Jig: 140,
   "Slip Jig": 140,
-  "Hornpipe/Slow Reel/Polka": 130,
   Waltz: 120,
+  Hornpipe: 130,
+  Polka: 130,
+  Slide: 140,
+  Barndance: 130,
+  Strathspey: 130,
+  Mazurka: 120,
+  "Three-Two": 120,
+  March: 120,
   "Jig/Slip Jig": 140,
+  "Hornpipe/Slow Reel/Polka": 130,
 };
 
 // Prefill when adding a brand-new tune you're still learning.
@@ -22,18 +31,35 @@ export const LEARN_TEMPOS: TargetMap = {
   Reel: 100,
   Jig: 80,
   "Slip Jig": 80,
-  "Hornpipe/Slow Reel/Polka": 100,
   Waltz: 100,
+  Hornpipe: 100,
+  Polka: 100,
+  Slide: 80,
+  Barndance: 100,
+  Strathspey: 100,
+  Mazurka: 100,
+  "Three-Two": 80,
+  March: 80,
   "Jig/Slip Jig": 80,
+  "Hornpipe/Slow Reel/Polka": 100,
 };
 
+// Polka keeps 4 beats so the tempos of the old combined rows keep their meaning.
 export const DEFAULT_BEATS: Record<string, number> = {
   Reel: 4,
   Jig: 2,
   "Slip Jig": 3,
-  "Hornpipe/Slow Reel/Polka": 4,
   Waltz: 3,
+  Hornpipe: 4,
+  Polka: 4,
+  Slide: 4,
+  Barndance: 4,
+  Strathspey: 4,
+  Mazurka: 3,
+  "Three-Two": 3,
+  March: 2,
   "Jig/Slip Jig": 2,
+  "Hornpipe/Slow Reel/Polka": 4,
 };
 
 // Tempo change applied alongside each SRS grade.
@@ -46,6 +72,7 @@ export type NewTuneInput = {
   tempo: number;
   beats?: number;
   referenceUrl?: string | null;
+  libraryTuneId?: string | null;
 };
 
 /** Fresh SRS fields for a brand-new tune (id/persistence handled by the caller). */
@@ -64,6 +91,7 @@ export function freshTuneFields(input: NewTuneInput) {
     recordingPath: null as string | null,
     recordingDurationMs: null as number | null,
     referenceUrl: input.referenceUrl ?? null,
+    libraryTuneId: input.libraryTuneId ?? null,
   };
 }
 

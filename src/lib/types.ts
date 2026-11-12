@@ -1,11 +1,19 @@
 /** Domain types shared across the app. Mirrors the Supabase schema. */
 
+/** The twelve tune types of The Session. A slow reel is a `Reel`. */
 export const TUNE_TYPES = [
   "Reel",
   "Jig",
   "Slip Jig",
-  "Hornpipe/Slow Reel/Polka",
   "Waltz",
+  "Hornpipe",
+  "Polka",
+  "Slide",
+  "Barndance",
+  "Strathspey",
+  "Mazurka",
+  "Three-Two",
+  "March",
 ] as const;
 
 export type TuneType = (typeof TUNE_TYPES)[number];
@@ -33,7 +41,21 @@ export interface Tune {
   recordingDurationMs: number | null;
   /** Raw YouTube URL for a reference recording, or null. Parsed at render. */
   referenceUrl: string | null;
+  /** The Library tune this tune was added from, or null. */
+  libraryTuneId: string | null;
   updatedAt: string;
+}
+
+/** A tune of the Library: the shared list ingested from The Session. */
+export interface LibraryTune {
+  id: string;
+  sessionId: number;
+  name: string;
+  type: TuneType;
+  /** Key of the first setting, as The Session gives it (`Gmajor`). */
+  key: string;
+  /** Number of tunebooks that hold the tune. Gives the popularity rank. */
+  tunebooks: number;
 }
 
 export type TargetMap = Record<string, number>;

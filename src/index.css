@@ -698,6 +698,50 @@ nav button.active::before { background: var(--color-accent); }
 .tune-row .t-due { font-size: var(--text-xs); color: var(--color-muted); }
 .tune-row .t-due.due-now { color: var(--color-hard); font-weight: 600; }
 
+/* ---- Library: filters and the Add action ---- */
+.library-filters { flex-wrap: wrap; margin-top: 0; }
+.library-filters select {
+  flex: 1;
+  min-width: 7rem;
+  height: var(--control-h);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-input);
+  color: var(--color-ink);
+  padding: 0 var(--space-xs);
+  font-size: var(--text-md);
+}
+.library-filters select:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.toolbar.library-filters button {
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule-2);
+  color: var(--color-ink);
+}
+.toolbar.library-filters button.active {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+.library-row { cursor: default; }
+.library-row .t-right button {
+  min-height: var(--control-h);
+  background: var(--color-ink);
+  border: none;
+  border-radius: var(--radius-input);
+  color: var(--color-paper);
+  font-size: var(--text-md);
+  font-weight: 600;
+  padding: 0 var(--space-md);
+  cursor: pointer;
+}
+.library-row .t-right button:disabled { opacity: 0.5; cursor: default; }
+.library-row .t-in {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+.error-note { color: var(--color-again); font-size: var(--text-xs); padding: var(--space-xs) 0; }
+
 .pager {
   display: flex;
   align-items: center;
