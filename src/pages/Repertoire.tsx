@@ -3,10 +3,11 @@ import { useTunes } from "../hooks/useTunes";
 import { daysUntil } from "../lib/dates";
 import type { Tune } from "../lib/types";
 import { TuneModal } from "../components/TuneModal";
+import { Pager } from "../components/Pager";
+import { pageSlice } from "../lib/paging";
+import { copy } from "../copy";
 
-const PAGE_SIZE = 25;
-
-export function Tunes() {
+export function Repertoire() {
   const tunesQ = useTunes();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -23,12 +24,7 @@ export function Tunes() {
     [tunes, q],
   );
 
-  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-  // Clamp during render so a shrinking result set (new search, deletion) can't
-  // strand us on an empty page without needing an effect to reset state.
-  const currentPage = Math.min(page, pageCount);
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = list.slice(start, start + PAGE_SIZE);
+  const { items: pageItems, currentPage, pageCount } = pageSlice(list, page);
 
   function openAdd() {
     setEditing(null);
@@ -44,22 +40,19 @@ export function Tunes() {
       <div className="toolbar">
         <input
           type="search"
-          placeholder="Search tunes…"
+          placeholder={copy.repertoire.search}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(1);
           }}
         />
-        <button onClick={openAdd}>+ Add</button>
+        <button onClick={openAdd}>{copy.repertoire.add}</button>
       </div>
-      <div className="tune-count">
-        {list.length} of {tunes.length} tunes
-      </div>
+      <div className="tune-count">{copy.repertoire.count(list.length, tunes.length)}</div>
       <div>
         {pageItems.map((t) => {
           const d = daysUntil(t.due);
-          const dueTxt = d <= 0 ? "due now" : d === 1 ? "due tomorrow" : `due in ${d}d`;
           return (
             <div
               key={t.id}
@@ -77,32 +70,24 @@ export function Tunes() {
               <div className="t-main">
                 <div className="t-title">
                   {t.title}
-                  {t.recordingPath && <span className="mic" title="Has recording">&#9679;</span>}
+                  {t.recordingPath && (
+                    <span className="mic" title={copy.repertoire.hasRecording}>
+                      &#9679;
+                    </span>
+                  )}
                 </div>
                 <div className="t-sub">{t.type}</div>
               </div>
               <div className="t-right">
                 <div className="t-bpm">{t.tempo}</div>
-                <div className={`t-due${d <= 0 ? " due-now" : ""}`}>{dueTxt}</div>
+                <div className={`t-due${d <= 0 ? " due-now" : ""}`}>{copy.repertoire.due(d)}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {pageCount > 1 && (
-        <div className="pager">
-          <button onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1}>
-            ‹ Prev
-          </button>
-          <span className="pager-status">
-            Page {currentPage} of {pageCount}
-          </span>
-          <button onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pageCount}>
-            Next ›
-          </button>
-        </div>
-      )}
+      <Pager page={currentPage} pageCount={pageCount} onPage={setPage} />
 
       <TuneModal open={modalOpen} tune={editing} onClose={() => setModalOpen(false)} />
     </>

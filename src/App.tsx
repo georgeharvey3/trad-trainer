@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "./auth/AuthProvider";
 import { AuthScreen } from "./auth/AuthScreen";
 import { isSupabaseConfigured } from "./lib/supabase";
 import { SetupScreen } from "./SetupScreen";
-import { useSeedIfEmpty } from "./hooks/useTunes";
 import { useTunes } from "./hooks/useTunes";
 import { Practice } from "./pages/Practice";
-import { Tunes } from "./pages/Tunes";
+import { Repertoire } from "./pages/Repertoire";
+import { Library } from "./pages/Library";
 import { Settings } from "./pages/Settings";
+import { copy } from "./copy";
 
-type TabName = "practice" | "tunes" | "settings";
+const TABS = ["practice", "repertoire", "library", "settings"] as const;
+type TabName = (typeof TABS)[number];
 
 export function App() {
   const { loading, session } = useAuth();
@@ -18,7 +20,7 @@ export function App() {
     return <SetupScreen />;
   }
   if (loading) {
-    return <div className="center-note">Loading&hellip;</div>;
+    return <div className="center-note">{copy.app.loading}</div>;
   }
   if (!session) {
     return <AuthScreen />;
@@ -30,48 +32,30 @@ function AppShell() {
   const { signOut } = useAuth();
   const [tab, setTab] = useState<TabName>("practice");
   const tunes = useTunes();
-  const seed = useSeedIfEmpty();
-  // Synchronous guard: StrictMode fires this effect twice on mount against the
-  // same stale mutation state, so an async `isIdle` check isn't enough to stop
-  // a double seed. A ref flips before the first mutate and blocks the second.
-  const seededRef = useRef(false);
-
-  // On first login for a new account, populate the starter tune list.
-  useEffect(() => {
-    if (tunes.isSuccess && tunes.data.length === 0 && !seededRef.current) {
-      seededRef.current = true;
-      seed.mutate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tunes.isSuccess, tunes.data?.length]);
-
   const count = tunes.data?.length ?? 0;
 
   return (
     <>
       <header>
-        <h1>Trad Trainer</h1>
-        <span className="sub">{count ? `${count} tunes` : ""}</span>
+        <h1>{copy.app.title}</h1>
+        <span className="sub">{copy.app.tuneCount(count)}</span>
         <span className="spacer" />
         <button className="signout" onClick={() => void signOut()}>
-          Sign out
+          {copy.app.signOut}
         </button>
       </header>
       <main>
         {tab === "practice" && <Practice />}
-        {tab === "tunes" && <Tunes />}
+        {tab === "repertoire" && <Repertoire />}
+        {tab === "library" && <Library />}
         {tab === "settings" && <Settings />}
       </main>
       <nav>
-        <button className={tab === "practice" ? "active" : ""} onClick={() => setTab("practice")}>
-          Practice
-        </button>
-        <button className={tab === "tunes" ? "active" : ""} onClick={() => setTab("tunes")}>
-          Tunes
-        </button>
-        <button className={tab === "settings" ? "active" : ""} onClick={() => setTab("settings")}>
-          Settings
-        </button>
+        {TABS.map((t) => (
+          <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
+            {copy.app.tabs[t]}
+          </button>
+        ))}
       </nav>
     </>
   );

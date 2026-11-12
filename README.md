@@ -29,6 +29,11 @@ reference.
      storage bucket, and all row-level-security policies.
    - `0002_dedupe_tunes.sql` — removes any duplicate seed tunes and adds a unique
      index on `(user_id, title, type)` so duplicates can't recur.
+   - `0005_library.sql` — the read-only `library` table and the
+     `library_tune_id` link on `tunes`.
+
+   Then run [`supabase/library/top-200.sql`](./supabase/library/top-200.sql) to
+   fill the Library.
 
    > Using the Supabase CLI instead? `supabase db push` applies all migrations.
 
@@ -53,7 +58,18 @@ reference.
    npm run dev        # http://localhost:5173
    ```
 
-The first time you sign up, the account is seeded with the 158 starter tunes.
+A new account starts with an empty Repertoire. Add tunes from the Library tab,
+or add your own tunes in the Repertoire tab.
+
+### Refresh the Library
+
+The Library holds the top 200 tunes of [The Session](https://thesession.org).
+
+1. Run `node scripts/ingest-library.ts`. The script writes
+   `supabase/library/top-200.sql`. It does not write to the database.
+2. Run `supabase/library/top-200.sql` in the Supabase SQL editor.
+
+A second run does not make duplicates. It refreshes the popularity of each tune.
 
 ## Scripts
 
@@ -101,8 +117,11 @@ The first time you sign up, the account is seeded with the 158 starter tunes.
   synced.
 - **Metronome** — Web Audio lookahead scheduler; the first pulse of each bar is
   accented. Pulses per bar come from the tune type (reel 4, jig 6/8 → 2,
-  slip jig 9/8 → 3, waltz 3, polka 2) and are editable per tune.
-- **Tunes tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
+  slip jig 9/8 → 3, waltz 3, hornpipe and polka 4) and are editable per tune.
+- **Repertoire tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
+- **Library tab** — the top 200 tunes of The Session. Search by name, sort by
+  popularity or title, and filter by type or key. "Add" copies a tune into the
+  Repertoire.
 
 ## Installing it on a phone
 
@@ -132,11 +151,11 @@ Icons live in [`public/`](./public) (`apple-touch-icon.png` is the one iOS uses;
 
 ```
 src/
-├── lib/          srs, dates, session, types, seed, metronome, recorder, supabase client
+├── lib/          srs, dates, session, types, library, metronome, recorder, supabase client
 ├── hooks/        TanStack Query hooks (tunes, settings, recordings) + metronome binding
 ├── auth/         AuthProvider + email/password sign-in
-├── components/   Recorder, TuneModal
-└── pages/        Practice, Tunes, Settings
+├── components/   Recorder, TuneModal, Pager
+└── pages/        Practice, Repertoire, Library, Settings
 ```
 
 Data model (see the migration for full DDL + policies):

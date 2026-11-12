@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Tune, TuneType } from "./types";
+import type { LibraryTune, Tune, TuneType } from "./types";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -32,6 +32,7 @@ export interface TuneRow {
   recording_path: string | null;
   recording_duration_ms: number | null;
   reference_url: string | null;
+  library_tune_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,6 +53,7 @@ export function rowToTune(r: TuneRow): Tune {
     recordingPath: r.recording_path,
     recordingDurationMs: r.recording_duration_ms,
     referenceUrl: r.reference_url,
+    libraryTuneId: r.library_tune_id,
     updatedAt: r.updated_at,
   };
 }
@@ -72,5 +74,27 @@ export function tuneToRow(t: Partial<Tune>): Partial<TuneRow> {
   if (t.recordingPath !== undefined) r.recording_path = t.recordingPath;
   if (t.recordingDurationMs !== undefined) r.recording_duration_ms = t.recordingDurationMs;
   if (t.referenceUrl !== undefined) r.reference_url = t.referenceUrl;
+  if (t.libraryTuneId !== undefined) r.library_tune_id = t.libraryTuneId;
   return r;
+}
+
+/** Shape of a row in public.library. */
+export interface LibraryRow {
+  id: string;
+  session_id: number;
+  name: string;
+  type: string;
+  key: string;
+  tunebooks: number;
+}
+
+export function rowToLibraryTune(r: LibraryRow): LibraryTune {
+  return {
+    id: r.id,
+    sessionId: r.session_id,
+    name: r.name,
+    type: r.type as TuneType,
+    key: r.key,
+    tunebooks: r.tunebooks,
+  };
 }

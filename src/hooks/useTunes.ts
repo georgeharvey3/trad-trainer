@@ -1,8 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { rowToTune, supabase, tuneToRow, type TuneRow } from "../lib/supabase";
-import { freshTuneFields, gradeTune, type NewTuneInput } from "../lib/srs";
-import type { Grade, Settings, Tune } from "../lib/types";
-import { SEED_TUNES } from "../lib/seed";
+import {
+  rowToLibraryTune,
+  rowToTune,
+  supabase,
+  tuneToRow,
+  type LibraryRow,
+  type TuneRow,
+} from "../lib/supabase";
+import { DEFAULT_BEATS, freshTuneFields, gradeTune, LEARN_TEMPOS, type NewTuneInput } from "../lib/srs";
+import type { Grade, LibraryTune, Settings, Tune } from "../lib/types";
 import { useAuth } from "../auth/AuthProvider";
 
 export function tunesKey(userId: string | undefined) {
@@ -25,34 +31,35 @@ export function useTunes() {
   });
 }
 
-/** Seed a brand-new account with the starter tune list. No-op if any tune exists. */
-export function useSeedIfEmpty() {
+/** The Library: the shared list of tunes from The Session. */
+export function useLibrary() {
   const { user } = useAuth();
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const { count, error: countErr } = await supabase
-        .from("tunes")
-        .select("id", { count: "exact", head: true });
-      if (countErr) throw countErr;
-      if ((count ?? 0) > 0) return 0;
-
-      const rows = SEED_TUNES.map((s) => ({
-        user_id: user!.id,
-        ...tuneToRow(freshTuneFields(s)),
-      }));
-      // Idempotent seed: the unique index on (user_id, title, type) means any
-      // row that already exists is skipped, so a re-run can never duplicate.
-      const { error } = await supabase
-        .from("tunes")
-        .upsert(rows, { onConflict: "user_id,title,type", ignoreDuplicates: true });
+  return useQuery({
+    queryKey: ["library"],
+    enabled: !!user,
+    staleTime: Infinity,
+    queryFn: async (): Promise<LibraryTune[]> => {
+      // The list leaves out `abc` (about 1 KB a tune). Playback reads it per tune.
+      const { data, error } = await supabase.from("library").select("id, session_id, name, type, key, tunebooks");
       if (error) throw error;
-      return rows.length;
-    },
-    onSuccess: (inserted) => {
-      if (inserted > 0) qc.invalidateQueries({ queryKey: tunesKey(user?.id) });
+      return (data as LibraryRow[]).map(rowToLibraryTune);
     },
   });
+}
+
+/**
+ * Input for `useAddTune` that adds a Library tune to the Repertoire. The new
+ * row copies the name, type and beats (ADR 0001) and starts at the learn
+ * tempo. `freshTuneFields` makes it due today.
+ */
+export function libraryTuneInput(t: LibraryTune): NewTuneInput {
+  return {
+    title: t.name,
+    type: t.type,
+    tempo: LEARN_TEMPOS[t.type] || 100,
+    beats: DEFAULT_BEATS[t.type],
+    libraryTuneId: t.id,
+  };
 }
 
 export function useAddTune() {

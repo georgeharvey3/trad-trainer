@@ -117,7 +117,9 @@ function TuneForm({ tune, onClose }: { tune: Tune | null; onClose: () => void })
       <div className="field">
         <label>Type</label>
         <select value={type} onChange={(e) => onTypeChange(e.target.value as TuneType)}>
-          {TUNE_TYPES.map((t) => (
+          {/* A row not yet moved off a legacy type (such as "Hornpipe/Slow Reel/Polka")
+              keeps that type as an option, so the select shows the stored value. */}
+          {(TUNE_TYPES.includes(type) ? TUNE_TYPES : [type, ...TUNE_TYPES]).map((t) => (
             <option key={t}>{t}</option>
           ))}
         </select>

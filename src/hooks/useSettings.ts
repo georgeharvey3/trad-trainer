@@ -1,17 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { DEFAULT_TARGETS } from "../lib/srs";
+import { normalizeSettings } from "../lib/settings";
 import type { Settings } from "../lib/types";
 import { useAuth } from "../auth/AuthProvider";
-
-const DEFAULT_SETTINGS: Settings = { dailyCap: 10, targets: { ...DEFAULT_TARGETS } };
-
-function normalize(raw: Partial<Settings> | null | undefined): Settings {
-  return {
-    dailyCap: raw?.dailyCap ?? DEFAULT_SETTINGS.dailyCap,
-    targets: { ...DEFAULT_TARGETS, ...(raw?.targets ?? {}) },
-  };
-}
 
 export function useSettings() {
   const { user } = useAuth();
@@ -25,7 +16,7 @@ export function useSettings() {
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return normalize(data?.settings as Partial<Settings> | undefined);
+      return normalizeSettings(data?.settings as Partial<Settings> | undefined);
     },
   });
 }
