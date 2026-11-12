@@ -23,7 +23,7 @@ interface PopularPage {
   tunes: { id: number; name: string; type: string; tunebooks: number }[];
 }
 interface TuneDetail {
-  settings: { key: string }[];
+  settings: { key: string; abc: string }[];
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -47,10 +47,11 @@ async function main() {
     const type = toTuneType(t.type);
     if (!type) throw new Error(`Unknown Session type "${t.type}" for tune ${t.id} (${t.name})`);
     const detail = await getJson<TuneDetail>(`/tunes/${t.id}?format=json`);
-    const key = detail.settings[0]?.key;
-    if (!key) throw new Error(`Tune ${t.id} (${t.name}) has no settings`);
-    tunes.push({ sessionId: t.id, name: t.name, type, key, tunebooks: t.tunebooks });
-    console.log(`${i + 1}/${popular.length} ${t.name} (${type}, ${key})`);
+    // Key and ABC both come from the first setting, so they always agree.
+    const first = detail.settings[0];
+    if (!first?.key) throw new Error(`Tune ${t.id} (${t.name}) has no settings`);
+    tunes.push({ sessionId: t.id, name: t.name, type, key: first.key, tunebooks: t.tunebooks, abc: first.abc });
+    console.log(`${i + 1}/${popular.length} ${t.name} (${type}, ${first.key})`);
   }
 
   await mkdir(dirname(OUT), { recursive: true });

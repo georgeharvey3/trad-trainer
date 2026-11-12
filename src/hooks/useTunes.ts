@@ -39,7 +39,8 @@ export function useLibrary() {
     enabled: !!user,
     staleTime: Infinity,
     queryFn: async (): Promise<LibraryTune[]> => {
-      const { data, error } = await supabase.from("library").select("*");
+      // The list leaves out `abc` (about 1 KB a tune). Playback reads it per tune.
+      const { data, error } = await supabase.from("library").select("id, session_id, name, type, key, tunebooks");
       if (error) throw error;
       return (data as LibraryRow[]).map(rowToLibraryTune);
     },

@@ -17,7 +17,10 @@ create table if not exists public.library (
   -- Key of the first setting, as The Session gives it (`Gmajor`).
   key         text not null,
   -- Number of tunebooks that hold the tune. Gives the popularity rank.
-  tunebooks   integer not null default 0
+  tunebooks   integer not null default 0,
+  -- ABC notation of the first setting (the same setting as `key`). The body
+  -- only: The Session gives no header, so the app adds X:, M:, L:, K:.
+  abc         text not null default ''
 );
 
 alter table public.library enable row level security;
