@@ -29,4 +29,9 @@ describe("tuneAbc", () => {
     expect(key("Amixolydian")).toBe("K:Amix");
     expect(key("F#minor")).toBe("K:F#min");
   });
+
+  it("leaves out the chord symbols of the body", () => {
+    const abc = tuneAbc({ name: "T", type: "Hornpipe", key: "Amixolydian", abc: '|:"A"EAAG ABcd|efec "D"d2 cd|' }, 90);
+    expect(abc.split("\n")[6]).toBe("|:EAAG ABcd|efec d2 cd|");
+  });
 });

@@ -55,6 +55,8 @@ export function tuneAbc(tune: AbcSource, tempo: number, beats = DEFAULT_BEATS[tu
     "L:1/8",
     `Q:${beatLength(meter, beats)}=${Math.round(tempo)}`,
     `K:${abcKey(tune.key)}`,
-    ...tune.abc.split("!"),
+    // Some Session tunes carry chord symbols ("A"). The app shows and plays
+    // only the melody, so it leaves them out.
+    ...tune.abc.replace(/"[^"]*"/g, "").split("!"),
   ].join("\n");
 }

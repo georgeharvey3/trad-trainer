@@ -33,8 +33,7 @@ class AbcPlayback {
     this.setOwner(owner);
     const synth = new abcjs.synth.CreateSynth();
     try {
-      // Some Session tunes carry chord symbols ("A"). Play only the melody.
-      await synth.init({ visualObj, options: { chordsOff: true } });
+      await synth.init({ visualObj });
       await synth.prime();
     } catch (err) {
       if (generation === this.generation) this.stop();
