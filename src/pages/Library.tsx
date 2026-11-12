@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { libraryTuneInput, useAddTune, useLibrary, useTunes } from "../hooks/useTunes";
 import { formatKey, libraryView, type LibrarySort } from "../lib/library";
 import { TUNE_TYPES, type LibraryTune } from "../lib/types";
 import { Pager } from "../components/Pager";
+import { AbcPlayer } from "../components/AbcPlayer";
+import { LEARN_TEMPOS } from "../lib/srs";
 import { pageSlice } from "../lib/paging";
 import { copy } from "../copy";
 
@@ -18,6 +20,8 @@ export function Library() {
   const [page, setPage] = useState(1);
   const [adding, setAdding] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  // The Library tune whose player is open, or null.
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const library = useMemo(() => libraryQ.data ?? [], [libraryQ.data]);
   // A tune is in the Repertoire only through `library_tune_id`, never by title.
@@ -104,23 +108,35 @@ export function Library() {
       {addError && <div className="error-note">{addError}</div>}
       <div>
         {items.map((t) => (
-          <div key={t.id} className="tune-row library-row">
-            <div className="t-main">
-              <div className="t-title">{t.name}</div>
-              <div className="t-sub">
-                {t.type} · {formatKey(t.key)}
+          <Fragment key={t.id}>
+            <div className="tune-row library-row">
+              <div className="t-main">
+                <div className="t-title">{t.name}</div>
+                <div className="t-sub">
+                  {t.type} · {formatKey(t.key)}
+                </div>
+              </div>
+              <div className="t-right">
+                <button
+                  className={`t-preview${previewId === t.id ? " active" : ""}`}
+                  aria-expanded={previewId === t.id}
+                  onClick={() => setPreviewId(previewId === t.id ? null : t.id)}
+                >
+                  {previewId === t.id ? copy.library.hidePreview : copy.library.preview}
+                </button>
+                {inRepertoire.has(t.id) ? (
+                  <span className="t-in">{copy.library.inRepertoire}</span>
+                ) : (
+                  <button onClick={() => add(t)} disabled={adding !== null}>
+                    {copy.library.add}
+                  </button>
+                )}
               </div>
             </div>
-            <div className="t-right">
-              {inRepertoire.has(t.id) ? (
-                <span className="t-in">{copy.library.inRepertoire}</span>
-              ) : (
-                <button onClick={() => add(t)} disabled={adding !== null}>
-                  {copy.library.add}
-                </button>
-              )}
-            </div>
-          </div>
+            {previewId === t.id && (
+              <AbcPlayer libraryTuneId={t.id} initialTempo={LEARN_TEMPOS[t.type] || 100} />
+            )}
+          </Fragment>
         ))}
       </div>
 

@@ -47,6 +47,25 @@ export function useLibrary() {
   });
 }
 
+/** One Library tune with its `abc`, read when the user opens its player. */
+export function useLibraryTune(id: string | null) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["library-tune", id],
+    enabled: !!user && !!id,
+    staleTime: Infinity,
+    queryFn: async (): Promise<LibraryTune> => {
+      const { data, error } = await supabase
+        .from("library")
+        .select("id, session_id, name, type, key, tunebooks, abc")
+        .eq("id", id!)
+        .single();
+      if (error) throw error;
+      return rowToLibraryTune(data as LibraryRow);
+    },
+  });
+}
+
 /**
  * Input for `useAddTune` that adds a Library tune to the Repertoire. The new
  * row copies the name, type and beats (ADR 0001) and starts at the learn

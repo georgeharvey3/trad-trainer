@@ -15,6 +15,8 @@ import {
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
 import { ReferencePlayer } from "../components/ReferencePlayer";
+import { AbcPlayer } from "../components/AbcPlayer";
+import { abcPlayback } from "../lib/abcPlayback";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
   { g: "again", cls: "g-again", label: "Fail" },
@@ -214,12 +216,26 @@ export function Practice() {
           <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
         )}
 
+        {t.libraryTuneId && (
+          <AbcPlayer
+            key={t.id}
+            libraryTuneId={t.libraryTuneId}
+            initialTempo={t.tempo}
+            beats={t.beats}
+            disabled={isRecording}
+            onPlay={() => metro.stop()}
+          />
+        )}
+
         <Recorder
           key={t.id}
           mode="saved"
           tune={t}
           metronomeRunning={metro.running}
-          onRecordingStart={() => metro.stop()}
+          onRecordingStart={() => {
+            metro.stop();
+            abcPlayback.stop();
+          }}
           onRecordingChange={setIsRecording}
         />
 

@@ -86,6 +86,7 @@ export interface LibraryRow {
   type: string;
   key: string;
   tunebooks: number;
+  abc?: string;
 }
 
 export function rowToLibraryTune(r: LibraryRow): LibraryTune {
@@ -96,5 +97,6 @@ export function rowToLibraryTune(r: LibraryRow): LibraryTune {
     type: r.type as TuneType,
     key: r.key,
     tunebooks: r.tunebooks,
+    ...(r.abc !== undefined && { abc: r.abc }),
   };
 }

@@ -56,6 +56,11 @@ export interface LibraryTune {
   key: string;
   /** Number of tunebooks that hold the tune. Gives the popularity rank. */
   tunebooks: number;
+  /**
+   * ABC body of the first setting, with `!` as the line break. Only a read
+   * for one tune fills it: the list query leaves it out.
+   */
+  abc?: string;
 }
 
 export type TargetMap = Record<string, number>;
