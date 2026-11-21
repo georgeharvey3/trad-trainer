@@ -6,6 +6,7 @@ import { useSaveRecording } from "../hooks/useRecording";
 import { useSettings } from "../hooks/useSettings";
 import type { Recording } from "../lib/recorder";
 import { isYouTubeUrl } from "../lib/youtube";
+import { isDuplicate, writeErrorText } from "../lib/dbErrors";
 import { useNav } from "../nav";
 import { Recorder } from "./Recorder";
 import { Sheet, Stepper, Switch } from "./ui";
@@ -104,16 +105,14 @@ function Form({
       }
       onClose();
     } catch (err) {
-      const e = err as { message?: string; code?: string } | null;
-      const msg = e?.message || "";
-      if (e?.code === "23505" || /duplicate key|unique constraint/i.test(msg)) {
+      if (isDuplicate(err)) {
         const existing = (tunesQ.data ?? []).find(
           (t) => t.id !== tune?.id && t.title.toLowerCase() === cleanTitle.toLowerCase() && t.type === type,
         );
         setDuplicateId(existing?.id ?? null);
         setSaveError(`You already have a ${type.toLowerCase()} called “${cleanTitle}”.`);
       } else {
-        setSaveError(`Couldn’t save. ${msg || "Check your connection and try again."}`);
+        setSaveError(writeErrorText(err, "Couldn’t save."));
       }
     }
   }

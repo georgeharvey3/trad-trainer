@@ -6,6 +6,7 @@ import { dueLabel, starterSet, tempoSeries } from "../lib/progress";
 import { getBarCount } from "../lib/barCount";
 import { targetTempo } from "../lib/srs";
 import { PAGE_SIZE } from "../lib/paging";
+import { isDuplicate, writeErrorText } from "../lib/dbErrors";
 import { TUNE_TYPES, type LibraryTune, type Review, type Stage, type Tune } from "../lib/types";
 import { useNav } from "../nav";
 import { AbcPlayer } from "../components/AbcPlayer";
@@ -421,8 +422,11 @@ function AddSheet({ tune, onClose }: { tune: LibraryTune; onClose: () => void })
         if (stage === "learning") nav.openLearning(created.id);
       },
       onError: (e) => {
-        const code = (e as { code?: string } | null)?.code;
-        setError(code === "23505" ? `You already have a ${tune.type.toLowerCase()} called “${tune.name}”.` : "Couldn’t add the tune. Try again.");
+        setError(
+          isDuplicate(e)
+            ? `You already have a ${tune.type.toLowerCase()} called “${tune.name}”.`
+            : writeErrorText(e, "Couldn’t add the tune."),
+        );
       },
     });
   }
