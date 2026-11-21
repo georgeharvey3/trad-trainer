@@ -51,6 +51,13 @@ export const copy = {
     playFailed: "Could not play the tune.",
     noAbc: "No notation for this tune.",
   },
+  scorePanel: {
+    title: "Sheet music",
+    subtitle: "Tap to see the score and play it",
+    label: "Score",
+    show: "Show",
+    hide: "Hide",
+  },
   pager: {
     prev: "‹ Prev",
     next: "Next ›",

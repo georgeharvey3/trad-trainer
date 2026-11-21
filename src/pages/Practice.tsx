@@ -15,7 +15,7 @@ import {
 import type { Grade, Session, Tune } from "../lib/types";
 import { Recorder } from "../components/Recorder";
 import { ReferencePlayer } from "../components/ReferencePlayer";
-import { AbcPlayer } from "../components/AbcPlayer";
+import { ScorePanel } from "../components/ScorePanel";
 import { abcPlayback } from "../lib/abcPlayback";
 
 const GRADES: { g: Grade; cls: string; label: string }[] = [
@@ -217,7 +217,7 @@ export function Practice() {
         )}
 
         {t.libraryTuneId && (
-          <AbcPlayer
+          <ScorePanel
             key={`abc-${t.id}`}
             libraryTuneId={t.libraryTuneId}
             type={t.type}
