@@ -213,12 +213,12 @@ export function Practice() {
         </button>
 
         {t.referenceUrl && (
-          <ReferencePlayer key={t.id} url={t.referenceUrl} onPlay={() => metro.stop()} />
+          <ReferencePlayer key={`ref-${t.id}`} url={t.referenceUrl} onPlay={() => metro.stop()} />
         )}
 
         {t.libraryTuneId && (
           <AbcPlayer
-            key={t.id}
+            key={`abc-${t.id}`}
             libraryTuneId={t.libraryTuneId}
             type={t.type}
             beats={t.beats}
@@ -228,7 +228,7 @@ export function Practice() {
         )}
 
         <Recorder
-          key={t.id}
+          key={`rec-${t.id}`}
           mode="saved"
           tune={t}
           metronomeRunning={metro.running}
