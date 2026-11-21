@@ -31,6 +31,9 @@ reference.
      index on `(user_id, title, type)` so duplicates can't recur.
    - `0005_library.sql` — the read-only `library` table and the
      `library_tune_id` link on `tunes`.
+   - `0006_learning_and_reviews.sql` — the learning stage on `tunes`
+     (`stage`, `learnt_bars`) and the `reviews` log behind the streak, the
+     practice calendar and the tempo charts.
 
    Then run [`supabase/library/top-200.sql`](./supabase/library/top-200.sql) to
    fill the Library.
@@ -84,44 +87,52 @@ A second run does not make duplicates. It refreshes the popularity of each tune.
 
 ## How it works
 
-- **Practice tab** — tap *Start practice* and a random due tune is served; the
-  metronome auto-starts at that tune's current tempo. Grade it:
-  - **Fail** — schedule reset, tempo −8 BPM
+The app is built around a phone on a music stand: both hands are on the
+instrument, so practice is big type and few taps. Three tabs: **Today**,
+**Tunes** and **You**.
+
+- **Today** — this week's practice days and streak, today's set (how many
+  tunes, which types, the daily limit) and the tune you're learning. When the
+  limit is reached it says how many tunes move to tomorrow and offers one bonus
+  tune; when nothing is due it suggests learning time.
+- **Practice (music-stand mode)** — full screen, screen kept awake. Each tune
+  starts with a one-bar count-in, then shows a large tempo, a beat bar and ±2
+  nudges. Notes, Video and Record open in sheets. Turn the phone sideways and
+  the sheet music fills the screen. Grades stay hidden while you play: **Done**
+  stops the click and asks how it went, with a plain line per grade:
+  - **Again** — schedule reset, tempo −8 BPM
   - **Hard** — interval ×1.2, tempo held
   - **Good** — interval grows (1d → 3d → ×ease), tempo +2 BPM
   - **Easy** — interval grows faster, tempo +4 BPM
 
-  The buttons show the label alone — the resulting interval and tempo change are
-  the algorithm's business, not something to read mid-tune. Every grade retires
-  the tune from today's queue, Fail included: it stays due (so it leads
-  tomorrow's queue) but you don't play it twice in one sitting.
-  **Skip** sets a tune aside instead — no grade, no schedule or tempo change, it
-  doesn't count as done and doesn't use a daily-cap slot. Skipped tunes come back
-  tomorrow.
+  Keys 1–4 grade; Space, Enter, PageDown and → (what page-turner pedals send)
+  press Done. Between tunes a short recap shows the grade, the tempo change and
+  when the tune is back, with **Undo**. The session ends with a summary. Every
+  grade retires the tune from today's queue, Again included. **Skip** sets a tune
+  aside with no grade and no cap slot used.
 
-  The daily cap is spent by grading, not by being served: a tune you open and
-  walk away from costs nothing, so closing the app mid-tune leaves *cap left*
-  where it was and the tune stays in today's queue. *Cap left* only ever counts
-  down — once it reaches 0 nothing puts it back up for the rest of the day.
-
-  Tempo never exceeds the per-type target (Settings) and the −/+ buttons override
-  it mid-practice. Grades and tempo changes persist to your account immediately.
-- **Recordings** — each tune can hold one audio recording. Recording uses the
-  browser's `MediaRecorder`; the clip uploads to the private `recordings` bucket
-  (`<user_id>/<tune_id>`) and plays back via a short-lived signed URL. Recording
-  is **mutually exclusive with the metronome** — starting one stops the other.
-- **Daily cap** — at most N distinct tunes per day (default 10); the rest of the
-  due queue carries over. "Practice one more anyway" serves a single bonus tune
-  for today only; it's practice past the cap, so *cap left* stays at 0 rather
-  than ticking back up. The daily queue is per-device; the durable schedule is
-  synced.
+  The daily cap is spent by grading, not by being served, and only ever counts
+  down. Tempo never goes past the per-type target. Grades persist to your
+  account at once, and each one is logged in `reviews`.
+- **Learning** — adding a Library tune asks whether you can already play it
+  (it joins the rotation) or want to learn it (it goes on the learning shelf and
+  stays out of the queue). Learning tools: tap a bar on the score and tap another
+  to choose the bars to loop, slow them down, mark them learnt. Quick picks cover
+  4-bar chunks. A full take moves the tune into the rotation, due tomorrow.
+- **Tunes** — *Mine* lists learning tunes first, then the rotation with a small
+  tempo line per tune; *Find* is the Library (the top 200 tunes of The Session)
+  with type chips, a key filter, a starter set for new players, inline listening,
+  and "Show 25 more". Each tune has its own page: tempo over time against the
+  target, reviews and slip-ups, the take, the reference video and the sheet music.
+- **You** — streak, a 12-week practice calendar, biggest tempo gains, then
+  settings: daily limit, count-in, keep the screen on, target tempos, account,
+  backup.
+- **Recordings** — each tune holds one take, recorded with `MediaRecorder` into
+  the private `recordings` bucket (`<user_id>/<tune_id>`) and played back through
+  a short-lived signed URL. Recording stops the metronome.
 - **Metronome** — Web Audio lookahead scheduler; the first pulse of each bar is
   accented. Pulses per bar come from the tune type (reel 4, jig 6/8 → 2,
-  slip jig 9/8 → 3, waltz 3, hornpipe and polka 4) and are editable per tune.
-- **Repertoire tab** — search, add, edit, delete. A 🎤 marks tunes with a recording.
-- **Library tab** — the top 200 tunes of The Session. Search by name, sort by
-  popularity or title, and filter by type or key. "Add" copies a tune into the
-  Repertoire.
+  slip jig 9/8 → 3, waltz 3, hornpipe and polka 4).
 
 ## Installing it on a phone
 
@@ -154,16 +165,19 @@ src/
 ├── lib/          srs, dates, session, types, library, metronome, recorder, supabase client
 ├── hooks/        TanStack Query hooks (tunes, settings, recordings) + metronome binding
 ├── auth/         AuthProvider + email/password sign-in
-├── components/   Recorder, TuneModal, Pager
-└── pages/        Practice, Repertoire, Library, Settings
+├── components/   Recorder, TuneEditor, AbcPlayer, AbcScore, ReferencePlayer, ui
+├── practice/     Practice (music-stand mode)
+└── pages/        Today, Tunes, TunePage, Learning, You
 ```
 
 Data model (see the migration for full DDL + policies):
 
 - **`profiles`** — one row per user; holds `settings` (daily cap, per-type target
   tempos) as JSON.
-- **`tunes`** — SRS state per tune (tempo, ease, interval, due date, …) plus the
-  storage path of its recording.
+- **`tunes`** — SRS state per tune (tempo, ease, interval, due date, …), its
+  stage (`learning` or `rotation`) and learnt bars, plus the storage path of its
+  recording.
+- **`reviews`** — one row per grade (grade, tempo before and after, local date).
 - **`recordings` bucket** — private object storage, namespaced per user; every
   policy is gated on `auth.uid()`.
 

@@ -3,7 +3,12 @@ import type { Settings, TargetMap } from "./types";
 
 const LEGACY_HORNPIPE_POLKA = "Hornpipe/Slow Reel/Polka";
 
-const DEFAULT_SETTINGS: Settings = { dailyCap: 10, targets: { ...DEFAULT_TARGETS } };
+const DEFAULT_SETTINGS: Settings = {
+  dailyCap: 10,
+  targets: { ...DEFAULT_TARGETS },
+  countIn: true,
+  keepAwake: true,
+};
 
 /**
  * Fill a stored profile's settings with defaults. The old combined
@@ -20,5 +25,7 @@ export function normalizeSettings(raw: Partial<Settings> | null | undefined): Se
   return {
     dailyCap: raw?.dailyCap ?? DEFAULT_SETTINGS.dailyCap,
     targets: { ...DEFAULT_TARGETS, ...stored },
+    countIn: raw?.countIn ?? DEFAULT_SETTINGS.countIn,
+    keepAwake: raw?.keepAwake ?? DEFAULT_SETTINGS.keepAwake,
   };
 }

@@ -14,11 +14,16 @@ editorial
 
 ## Macrostructure family
 
-- App pages (Practice · Tunes · Settings): **Workbench** — one focused
-  single-column work surface per tab. Practice is the bench (the tune card);
-  Tunes is a ledger index; Settings is a form document. Variation knob:
-  the work-surface archetype (instrument panel / ledger / document), never
-  the theme.
+- App pages (Today · Tunes · You): **Workbench** — one focused
+  single-column work surface per tab. Today is a day card; Tunes is a ledger
+  index; You is progress over a form document. Variation knob: the
+  work-surface archetype (card / ledger / document), never the theme.
+- **Music-stand mode** (practice, learning, a tune's page): full screen, no tab
+  bar, built to be read from a metre away with both hands on the instrument —
+  130px tempo, a full-width beat bar, 64–72px controls, one big primary button
+  (Done / Count me in). Grades are hidden until Done, then asked in a sheet with
+  a plain line each. Sideways, the sheet music fills the screen beside a slim
+  metronome rail.
 - Auth / setup screens: **Letter** — a single centred card, typeset, quiet.
 - Marketing pages: none exist. If one is ever added, amend this file first.
 
@@ -86,7 +91,9 @@ Almanac multiplier 0.85× — functional, like a reference book.
 
 ## Microinteractions stance
 
-- Silent success — saving a tune, grading, saving settings show no toast.
+- Quiet success — saving a tune and grading show no toast (the recap between
+  tunes is the feedback for a grade). Settings show a small "Saved" tick for two
+  seconds beside the section heading, because silent auto-save felt broken.
 - Errors always get visible text (`.msg.error`, `.rec-status`), never colour alone.
 - Hover states only inside `@media (hover: hover)`.
 - Hit targets ≥ 44px on all touch controls.
@@ -103,7 +110,8 @@ Almanac multiplier 0.85× — functional, like a reference book.
 ## What screens MUST share
 
 - The masthead: Fraunces wordmark with the accent square, 3px double rule below.
-- The bottom tab bar voice: small-caps labels, accent top-tick on the active tab.
+- The bottom tab bar voice: three small-caps labels (Today · Tunes · You),
+  accent top-tick on the active tab.
 - The palette, both schemes. The 2+1 font roles. The spacing scale.
 - Hairline ledgers (border-separated rows) instead of boxed cards.
 
@@ -111,8 +119,9 @@ Almanac multiplier 0.85× — functional, like a reference book.
 
 - Work-surface archetype within the Workbench family (instrument panel /
   ledger / document).
-- The Practice bench is the one bordered surface in the app (the instrument
-  panel earns its frame); everything else is hairlines on paper.
+- Bordered surfaces are kept for the things you act on: today's set card
+  (1.5px ink), the learning shelf, panels holding a score or a take, and sheets.
+  Lists stay hairlines on paper.
 
 ## Per-page allowances
 

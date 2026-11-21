@@ -1,59 +1,36 @@
 /**
- * Every string the app shows a user, grouped by screen. Screens not yet
- * moved here still hold their own literals.
+ * Strings shared across screens. Screen-only copy sits in each screen, in
+ * plain words (see design.md, CTA voice).
  */
-const listCount = (shown: number, total: number) => `${shown} of ${total} tunes`;
+import type { Grade } from "./lib/types";
 
 export const copy = {
   app: {
     title: "Trad Trainer",
     loading: "Loading…",
-    tuneCount: (n: number) => (n === 0 ? "" : n === 1 ? "1 tune" : `${n} tunes`),
-    signOut: "Sign out",
     tabs: {
-      practice: "Practice",
-      repertoire: "Repertoire",
-      library: "Library",
-      settings: "Settings",
+      today: "Today",
+      tunes: "Tunes",
+      you: "You",
     },
   },
-  repertoire: {
-    search: "Search tunes…",
-    add: "+ Add",
-    count: listCount,
-    hasRecording: "Has recording",
-    due: (days: number) => (days <= 0 ? "due now" : days === 1 ? "due tomorrow" : `due in ${days}d`),
-  },
-  library: {
-    search: "Search Library…",
-    sortPopularity: "Popularity",
-    sortTitle: "Title",
-    reverse: "Reverse",
-    allTypes: "All types",
-    allKeys: "All keys",
-    count: listCount,
-    add: "Add",
-    preview: "Preview",
-    hidePreview: "Hide preview",
-    inRepertoire: "In Repertoire",
-    empty: "No tunes in the Library yet.",
-    loadFailed: "Could not load the Library.",
-    addFailed: "Could not add tune.",
-    addDuplicate: (title: string) => `Your Repertoire already has “${title}”.`,
-  },
+  /**
+   * The grades, each with a plain line so a grade means the same thing every
+   * day. The line says how the tune felt, not what the schedule does with it.
+   */
+  grades: [
+    { g: "again", label: "Again", line: "Fell apart. Back tomorrow, a bit slower." },
+    { g: "hard", label: "Hard", line: "Got through, with slips." },
+    { g: "good", label: "Good", line: "Solid. A touch faster next time." },
+    { g: "easy", label: "Easy", line: "Could play it in my sleep." },
+  ] as { g: Grade; label: string; line: string }[],
+  gradeLabel: { again: "Again", hard: "Hard", good: "Good", easy: "Easy" } as Record<Grade, string>,
   abcPlayer: {
     play: "Play tune",
-    stop: "Stop tune",
-    tempo: "Tempo",
-    bpm: (tempo: number) => `${tempo} BPM`,
-    loading: "Loading…",
-    loadFailed: "Could not load the tune.",
-    playFailed: "Could not play the tune.",
-    noAbc: "No notation for this tune.",
-  },
-  pager: {
-    prev: "‹ Prev",
-    next: "Next ›",
-    status: (page: number, count: number) => `Page ${page} of ${count}`,
+    stop: "Stop",
+    loading: "Loading the sheet music…",
+    loadFailed: "Couldn’t load the sheet music.",
+    playFailed: "Couldn’t play the tune.",
+    noAbc: "No sheet music for this tune.",
   },
 };

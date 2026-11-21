@@ -15,6 +15,7 @@
   --color-accent:     oklch(45% 0.11 155);
   --color-accent-ink: oklch(97% 0.015 155);
   --color-focus:      oklch(50% 0.13 155);
+  --color-accent-tint: oklch(92.5% 0.04 155);
   --color-backdrop:   oklch(25% 0.02 120 / 0.55);
 
   /* Grade hues — functional coding, tint + border + dark text */
@@ -91,6 +92,7 @@
     --color-accent:     oklch(70% 0.10 155);
     --color-accent-ink: oklch(18% 0.05 155);
     --color-focus:      oklch(74% 0.12 155);
+    --color-accent-tint: oklch(26% 0.05 155);
     --color-backdrop:   oklch(10% 0.01 90 / 0.6);
 
     --color-again:        oklch(72% 0.12 30);

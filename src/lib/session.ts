@@ -4,12 +4,12 @@
  * on the server. These helpers are pure over (tunes, session, settings).
  */
 import { todayStr } from "./dates";
-import type { Session, Settings, Tune } from "./types";
+import type { Session, SessionResult, Settings, Tune } from "./types";
 
 const SESSION_KEY = "tradTrainer.session.v1";
 
 export function freshSession(): Session {
-  return { date: todayStr(), done: [], skipped: [], extra: 0 };
+  return { date: todayStr(), done: [], skipped: [], extra: 0, results: [] };
 }
 
 export function loadSession(): Session {
@@ -63,13 +63,16 @@ export function practiceOrder(tunes: Tune[], seed: string = todayStr()): Tune[] 
 }
 
 /**
- * Tunes still waiting in today's queue: due, not yet graded, not skipped.
- * Returned in today's practice order (see `practiceOrder`).
+ * Tunes still waiting in today's queue: in the rotation, due, not yet graded,
+ * not skipped. A learning tune never joins the queue. Returned in today's
+ * practice order (see `practiceOrder`).
  */
 export function dueTunes(tunes: Tune[], session: Session): Tune[] {
   const today = todayStr();
   const retired = new Set([...session.done, ...session.skipped]);
-  return practiceOrder(tunes.filter((t) => t.due <= today && !retired.has(t.id)));
+  return practiceOrder(
+    tunes.filter((t) => t.stage !== "learning" && t.due <= today && !retired.has(t.id)),
+  );
 }
 
 /**
@@ -80,6 +83,27 @@ export function dueTunes(tunes: Tune[], session: Session): Tune[] {
 export function skipTune(session: Session, id: string): Session {
   if (session.skipped.includes(id)) return session;
   return { ...session, skipped: [...session.skipped, id] };
+}
+
+/**
+ * Retire a graded tune from today's queue and keep what the grade did, for the
+ * recap between tunes and the summary at the end.
+ */
+export function recordResult(session: Session, result: SessionResult): Session {
+  const done = completeTune(session, result.tuneId);
+  return { ...done, results: [...done.results.filter((r) => r.tuneId !== result.tuneId), result] };
+}
+
+/**
+ * Take back today's grade of a tune: it returns to the queue and its result is
+ * dropped. The caller restores the tune's schedule and removes its review.
+ */
+export function undoResult(session: Session, tuneId: string): Session {
+  return {
+    ...session,
+    done: session.done.filter((id) => id !== tuneId),
+    results: session.results.filter((r) => r.tuneId !== tuneId),
+  };
 }
 
 /** Retire a tune from today's queue after it has been graded. */

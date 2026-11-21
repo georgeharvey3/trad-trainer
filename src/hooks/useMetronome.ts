@@ -9,6 +9,8 @@ import { abcPlayback } from "../lib/abcPlayback";
 export function useMetronome() {
   const [running, setRunning] = useState(metronome.running);
   const [beat, setBeat] = useState<{ idx: number; accent: boolean } | null>(null);
+  // Beats heard since the last start: drives the count-in.
+  const [count, setCount] = useState(0);
   const beatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -18,6 +20,7 @@ export function useMetronome() {
     };
     metronome.onBeat = (idx, accent) => {
       setBeat({ idx, accent });
+      setCount((c) => c + 1);
       if (beatTimer.current) clearTimeout(beatTimer.current);
       beatTimer.current = setTimeout(() => setBeat(null), 90);
     };
@@ -34,9 +37,11 @@ export function useMetronome() {
   return {
     running,
     beat,
+    count,
     // The metronome and ABC playback never run at the same time.
     start: (bpm: number, beats: number) => {
       abcPlayback.stop();
+      setCount(0);
       metronome.start(bpm, beats);
     },
     stop: () => metronome.stop(),

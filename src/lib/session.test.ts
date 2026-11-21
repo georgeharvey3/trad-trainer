@@ -7,6 +7,8 @@ import {
   freshSession,
   pickNext,
   practiceOrder,
+  recordResult,
+  undoResult,
   skipTune,
   slotsLeft,
 } from "./session";
@@ -23,7 +25,7 @@ function makeTune(id: string, over: Partial<Tune> = {}): Tune {
   };
 }
 
-const settings: Settings = { dailyCap: 2, targets: { Reel: 220 } };
+const settings: Settings = { dailyCap: 2, targets: { Reel: 220 }, countIn: true, keepAwake: true };
 
 describe("skipTune", () => {
   it("takes the tune out of today's queue without grading it", () => {
@@ -204,5 +206,30 @@ describe("pickNext", () => {
 
     const after = completeTune(freshSession(), first.id);
     expect(pickNext(tunes, after, settings, first.id)?.id).toBe(order[1]);
+  });
+});
+
+describe("learning tunes", () => {
+  it("never join today's queue", () => {
+    const tunes = [makeTune("a"), makeTune("b", { stage: "learning" })];
+    expect(dueTunes(tunes, freshSession()).map((t) => t.id)).toEqual(["a"]);
+  });
+});
+
+describe("recordResult / undoResult", () => {
+  const result = { tuneId: "a", grade: "good" as const, tempoBefore: 100, tempoAfter: 102, due: addDays(todayStr(), 3) };
+
+  it("retires the tune and keeps what the grade did", () => {
+    const s = recordResult(freshSession(), result);
+    expect(s.done).toEqual(["a"]);
+    expect(s.results).toEqual([result]);
+  });
+
+  it("undo puts the tune back in the queue and drops its result", () => {
+    const tunes = [makeTune("a")];
+    const s = undoResult(recordResult(freshSession(), result), "a");
+    expect(s.done).toEqual([]);
+    expect(s.results).toEqual([]);
+    expect(dueTunes(tunes, s).map((t) => t.id)).toEqual(["a"]);
   });
 });
