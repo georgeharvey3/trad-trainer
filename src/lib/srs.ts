@@ -3,7 +3,7 @@
  * Ported verbatim in behaviour from the original prototype.
  */
 import { addDays, todayStr } from "./dates";
-import type { Grade, TargetMap, Tune, TuneType } from "./types";
+import type { Grade, Stage, TargetMap, Tune, TuneType } from "./types";
 
 // Ceiling the tempo ladder climbs toward (editable in Settings).
 // The legacy "Jig/Slip Jig" and "Hornpipe/Slow Reel/Polka" keys stay as a
@@ -73,6 +73,8 @@ export type NewTuneInput = {
   beats?: number;
   referenceUrl?: string | null;
   libraryTuneId?: string | null;
+  /** Defaults to the rotation: a tune you can already play. */
+  stage?: Stage;
 };
 
 /** Fresh SRS fields for a brand-new tune (id/persistence handled by the caller). */
@@ -92,7 +94,17 @@ export function freshTuneFields(input: NewTuneInput) {
     recordingDurationMs: null as number | null,
     referenceUrl: input.referenceUrl ?? null,
     libraryTuneId: input.libraryTuneId ?? null,
+    stage: input.stage ?? ("rotation" as Stage),
+    learntBars: [] as number[],
   };
+}
+
+/**
+ * Fields that move a learning tune into the rotation: its first review is
+ * tomorrow, at the tempo it was learnt at.
+ */
+export function graduateFields(tempo: number): Pick<Tune, "stage" | "due" | "tempo" | "learntBars"> {
+  return { stage: "rotation", due: addDays(todayStr(), 1), tempo: Math.round(tempo), learntBars: [] };
 }
 
 /** The target tempo of a tune type: the ceiling of the tempo ladder. */

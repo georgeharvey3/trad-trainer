@@ -21,6 +21,12 @@ export type TuneType = (typeof TUNE_TYPES)[number];
 export type Grade = "again" | "hard" | "good" | "easy";
 
 /**
+ * Where a tune is in its life. A `learning` tune stays out of the practice
+ * queue until a full take moves it into the `rotation` (the daily review).
+ */
+export type Stage = "learning" | "rotation";
+
+/**
  * A tune and its spaced-repetition state.
  * Dates are local `YYYY-MM-DD` strings (see lib/dates).
  */
@@ -43,7 +49,22 @@ export interface Tune {
   referenceUrl: string | null;
   /** The Library tune this tune was added from, or null. */
   libraryTuneId: string | null;
+  stage: Stage;
+  /** Bars of the score (1-based) marked as learnt while the tune is learnt. */
+  learntBars: number[];
   updatedAt: string;
+}
+
+/** One grade of one tune, as logged in `reviews`. */
+export interface Review {
+  id: string;
+  tuneId: string;
+  grade: Grade;
+  tempoBefore: number;
+  tempoAfter: number;
+  /** Local `YYYY-MM-DD` date of the review. */
+  reviewedOn: string;
+  createdAt: string;
 }
 
 /** A tune of the Library: the shared list ingested from The Session. */
@@ -68,6 +89,10 @@ export type TargetMap = Record<string, number>;
 export interface Settings {
   dailyCap: number;
   targets: TargetMap;
+  /** Play one bar of clicks before each tune. */
+  countIn: boolean;
+  /** Keep the screen on while practising or learning. */
+  keepAwake: boolean;
 }
 
 /** Per-device, per-day practice queue state (not synced). */
@@ -78,4 +103,16 @@ export interface Session {
   /** Set aside for today: no grade, no schedule change, no cap slot used. */
   skipped: string[];
   extra: number;
+  /** What each grade today did, in order. Feeds the recap and the summary. */
+  results: SessionResult[];
+}
+
+/** The outcome of one grade, kept for today's recap, undo and summary. */
+export interface SessionResult {
+  tuneId: string;
+  grade: Grade;
+  tempoBefore: number;
+  tempoAfter: number;
+  /** Next due date after the grade. */
+  due: string;
 }

@@ -26,8 +26,11 @@ class AbcPlayback {
     return () => this.listeners.delete(fn);
   }
 
-  /** Play a rendered tune. Call from a user gesture: it creates the audio context. */
-  async start(visualObj: abcjs.TuneObject, owner: object): Promise<void> {
+  /**
+   * Play a rendered tune. Call from a user gesture: it creates the audio
+   * context. With `loop`, the tune starts again each time it ends.
+   */
+  async start(visualObj: abcjs.TuneObject, owner: object, { loop = false } = {}): Promise<void> {
     this.stop();
     const generation = ++this.generation;
     this.setOwner(owner);
@@ -45,7 +48,17 @@ class AbcPlayback {
       eventCallback: (ev) => {
         this.unlight();
         if (!ev) {
-          if (generation === this.generation) this.stop();
+          if (generation !== this.generation) return undefined;
+          if (loop && this.synth && this.timer) {
+            const again = this.synth;
+            const timer = this.timer;
+            again.stop();
+            timer.stop();
+            again.start();
+            timer.start(0);
+            return undefined;
+          }
+          this.stop();
           return undefined;
         }
         for (const group of ev.elements ?? []) {

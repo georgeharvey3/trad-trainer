@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { LibraryTune, Tune, TuneType } from "./types";
+import type { Grade, LibraryTune, Review, Stage, Tune, TuneType } from "./types";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -33,6 +33,8 @@ export interface TuneRow {
   recording_duration_ms: number | null;
   reference_url: string | null;
   library_tune_id: string | null;
+  stage: Stage | null;
+  learnt_bars: number[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,6 +56,9 @@ export function rowToTune(r: TuneRow): Tune {
     recordingDurationMs: r.recording_duration_ms,
     referenceUrl: r.reference_url,
     libraryTuneId: r.library_tune_id,
+    // Before migration 0006 the columns are missing: every tune is in the rotation.
+    stage: r.stage ?? "rotation",
+    learntBars: r.learnt_bars ?? [],
     updatedAt: r.updated_at,
   };
 }
@@ -75,6 +80,8 @@ export function tuneToRow(t: Partial<Tune>): Partial<TuneRow> {
   if (t.recordingDurationMs !== undefined) r.recording_duration_ms = t.recordingDurationMs;
   if (t.referenceUrl !== undefined) r.reference_url = t.referenceUrl;
   if (t.libraryTuneId !== undefined) r.library_tune_id = t.libraryTuneId;
+  if (t.stage !== undefined) r.stage = t.stage;
+  if (t.learntBars !== undefined) r.learnt_bars = t.learntBars;
   return r;
 }
 
@@ -98,5 +105,29 @@ export function rowToLibraryTune(r: LibraryRow): LibraryTune {
     key: r.key,
     tunebooks: r.tunebooks,
     ...(r.abc !== undefined && { abc: r.abc }),
+  };
+}
+
+/** Shape of a row in public.reviews. */
+export interface ReviewRow {
+  id: string;
+  user_id: string;
+  tune_id: string;
+  grade: Grade;
+  tempo_before: number;
+  tempo_after: number;
+  reviewed_on: string;
+  created_at: string;
+}
+
+export function rowToReview(r: ReviewRow): Review {
+  return {
+    id: r.id,
+    tuneId: r.tune_id,
+    grade: r.grade,
+    tempoBefore: r.tempo_before,
+    tempoAfter: r.tempo_after,
+    reviewedOn: r.reviewed_on,
+    createdAt: r.created_at,
   };
 }
