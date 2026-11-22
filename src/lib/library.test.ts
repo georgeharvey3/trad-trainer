@@ -46,6 +46,10 @@ describe("libraryView", () => {
   const base = { search: "", sort: "popularity", reverse: false, type: "", key: "" } as const;
   const names = (v: LibraryTune[]) => v.map((t) => t.name);
 
+  it("leaves out the hidden tunes", () => {
+    expect(names(libraryView(lib, { ...base, hide: new Set(["2", "3"]) }))).toEqual(["The Kesh", "Cooley's"]);
+  });
+
   it("sorts by popularity, most tunebooks first", () => {
     expect(names(libraryView(lib, base))).toEqual(["Drowsy Maggie", "The Kesh", "Cooley's", "The Butterfly"]);
   });

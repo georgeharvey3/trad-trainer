@@ -214,6 +214,7 @@ function Find() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
   const [key, setKey] = useState("");
+  const [hideMine, setHideMine] = useState(true);
   const [shown, setShown] = useState(PAGE_SIZE);
   const [starter, setStarter] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -235,9 +236,10 @@ function Find() {
     [library, type],
   );
   const starters = useMemo(() => starterSet(library), [library]);
+  const hide = useMemo(() => (hideMine ? new Set(mine.keys()) : undefined), [hideMine, mine]);
   const list = useMemo(
-    () => (starter ? starters : libraryView(library, { search, sort: "popularity", reverse: false, type, key })),
-    [starter, starters, library, search, type, key],
+    () => (starter ? starters : libraryView(library, { search, sort: "popularity", reverse: false, type, key, hide })),
+    [starter, starters, library, search, type, key, hide],
   );
   const typesInLibrary = TUNE_TYPES.filter((t) => library.some((l) => l.type === t));
 
@@ -255,7 +257,8 @@ function Find() {
   if (libraryQ.isLoading) return <RowsSkeleton />;
   if (library.length === 0) return <p className="center-note">No tunes in the Library yet.</p>;
 
-  const filtersOn = !!(type || key || search.trim());
+  const hiding = hideMine && mine.size > 0;
+  const filtersOn = !!(type || key || search.trim() || hiding);
   const reset = () => setShown(PAGE_SIZE);
 
   return (
@@ -305,6 +308,12 @@ function Find() {
             <span className="small num">
               {filtersOn ? `${list.length} of ${library.length}` : `${library.length} tunes · most popular first`}
             </span>
+            <div className="hrow gap-2xs">
+            {mine.size > 0 && (
+              <button className="chip" aria-pressed={hideMine} onClick={() => { setHideMine(!hideMine); reset(); }}>
+                Hide mine
+              </button>
+            )}
             <label className="hrow">
               <span className="visually-hidden">Key</span>
               <select
@@ -323,6 +332,7 @@ function Find() {
                 ))}
               </select>
             </label>
+            </div>
           </div>
         </>
       )}
@@ -334,8 +344,8 @@ function Find() {
             The Library holds the 200 most popular tunes on The Session.
           </p>
           <div className="stack gap-sm mt-md" style={{ width: "100%" }}>
-            {(type || key) && (
-              <button className="btn btn-primary btn-block" onClick={() => { setType(""); setKey(""); }}>
+            {(type || key || hiding) && (
+              <button className="btn btn-primary btn-block" onClick={() => { setType(""); setKey(""); setHideMine(false); }}>
                 Clear the filters
               </button>
             )}
