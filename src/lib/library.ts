@@ -34,6 +34,8 @@ export interface LibraryQuery {
   type: string;
   /** Session key to show, or "" for all. */
   key: string;
+  /** Library tune ids to leave out, such as the ones already in the Repertoire. */
+  hide?: ReadonlySet<string>;
 }
 
 /** The Library tunes that match the query, in the order the query asks for. */
@@ -43,7 +45,8 @@ export function libraryView(tunes: LibraryTune[], q: LibraryQuery): LibraryTune[
     (t) =>
       (!search || t.name.toLowerCase().includes(search)) &&
       (!q.type || t.type === q.type) &&
-      (!q.key || t.key === q.key),
+      (!q.key || t.key === q.key) &&
+      !q.hide?.has(t.id),
   );
   list.sort((a, b) =>
     q.sort === "title" ? a.name.localeCompare(b.name) : b.tunebooks - a.tunebooks || a.name.localeCompare(b.name),
