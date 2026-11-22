@@ -22,15 +22,23 @@ export function AbcScore({ abc, onRendered, onPick, label }: Props) {
 
   useEffect(() => {
     if (!ref.current) return;
+    // abcjs listens for touch and mouse, and a phone follows each tap with a
+    // copy mouse event, so one tap would pick twice. Skip the mouse copy.
+    let lastTouch = -Infinity;
     const visual = abcjs.renderAbc(ref.current, abc, {
       responsive: "resize",
       add_classes: true,
       paddingleft: 0,
       paddingright: 0,
-      clickListener: (el) => {
+      // abcjs passes the browser event as a sixth argument its types leave out.
+      clickListener: ((el: unknown, ...rest: unknown[]) => {
+        const ev = rest[4];
+        const mouse = (ev as { type?: string } | undefined)?.type?.startsWith("mouse");
+        if (!mouse) lastTouch = performance.now();
+        else if (performance.now() - lastTouch < 1000) return;
         const start = (el as unknown as { startChar?: number }).startChar;
         if (typeof start === "number") cb.current.onPick?.(start);
-      },
+      }) as abcjs.ClickListener,
     })[0];
     cb.current.onRendered?.(visual);
   }, [abc]);
