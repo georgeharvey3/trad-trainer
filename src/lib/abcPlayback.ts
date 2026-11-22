@@ -28,9 +28,14 @@ class AbcPlayback {
 
   /**
    * Play a rendered tune. Call from a user gesture: it creates the audio
-   * context. With `loop`, the tune starts again each time it ends.
+   * context. With `loop`, the tune starts again each time it ends, and
+   * `onLoop` is called each time it does.
    */
-  async start(visualObj: abcjs.TuneObject, owner: object, { loop = false } = {}): Promise<void> {
+  async start(
+    visualObj: abcjs.TuneObject,
+    owner: object,
+    { loop = false, onLoop }: { loop?: boolean; onLoop?: () => void } = {},
+  ): Promise<void> {
     this.stop();
     const generation = ++this.generation;
     this.setOwner(owner);
@@ -45,10 +50,13 @@ class AbcPlayback {
     if (generation !== this.generation) return;
     this.synth = synth;
     this.timer = new abcjs.TimingCallbacks(visualObj, {
+      // At the end, abcjs stops the timer unless the callback returns
+      // "continue". It does that after the callback, so a loop must return
+      // "continue" or the timer it just restarted is stopped again.
       eventCallback: (ev) => {
         this.unlight();
         if (!ev) {
-          if (generation !== this.generation) return undefined;
+          if (generation !== this.generation) return "continue";
           if (loop && this.synth && this.timer) {
             const again = this.synth;
             const timer = this.timer;
@@ -56,7 +64,8 @@ class AbcPlayback {
             timer.stop();
             again.start();
             timer.start(0);
-            return undefined;
+            onLoop?.();
+            return "continue";
           }
           this.stop();
           return undefined;

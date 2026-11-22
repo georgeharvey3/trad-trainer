@@ -117,7 +117,7 @@ function LearningRun({
     metro.stop();
     const visual = abcjs.renderAbc(hiddenRef.current, text, {})[0];
     setLoops(0);
-    abcPlayback.start(visual, self, { loop: true }).catch(() => setError(copy.abcPlayer.playFailed));
+    abcPlayback.start(visual, self, { loop: true, onLoop: () => setLoops((l) => l + 1) }).catch(() => setError(copy.abcPlayer.playFailed));
   }
   useEffect(() => {
     if (abcPlayback.isOwner(self) && loopText) playLoop(loopText);
@@ -131,15 +131,6 @@ function LearningRun({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recording]);
-
-  // Count the times round, roughly: one loop lasts this long.
-  useEffect(() => {
-    if (!playing || !loopRange) return;
-    const beatsPerBar = tune.beats;
-    const ms = ((loopRange.to - loopRange.from + 1) * beatsPerBar * 60000) / speed;
-    const id = setInterval(() => setLoops((l) => l + 1), ms);
-    return () => clearInterval(id);
-  }, [playing, loopRange, speed, tune.beats]);
 
   function markLearnt() {
     if (!range) return;
