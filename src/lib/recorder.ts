@@ -3,6 +3,8 @@
  * Kept UI-agnostic so a React hook can drive it.
  */
 
+import { setAudioSessionType } from "./audioSession";
+
 export interface Recording {
   blob: Blob;
   mimeType: string;
@@ -39,6 +41,9 @@ export class TuneRecorder {
 
   async start(): Promise<void> {
     if (!isRecordingSupported()) throw new Error("Recording is not supported in this browser.");
+    // The metronome may have set the session to "playback", which can block
+    // the mic on iOS.
+    setAudioSessionType("play-and-record");
     this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     this.mimeType = pickMimeType();
     this.chunks = [];
@@ -84,5 +89,6 @@ export class TuneRecorder {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     this.rec = null;
+    setAudioSessionType("auto");
   }
 }

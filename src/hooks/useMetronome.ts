@@ -11,6 +11,8 @@ export function useMetronome() {
   const [beat, setBeat] = useState<{ idx: number; accent: boolean } | null>(null);
   // Beats heard since the last start: drives the count-in.
   const [count, setCount] = useState(0);
+  // Running but making no sound (iOS wants a tap to start audio).
+  const [silent, setSilent] = useState(false);
   const beatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -18,6 +20,7 @@ export function useMetronome() {
       setRunning(r);
       if (!r) setBeat(null);
     };
+    metronome.onSilentChange = setSilent;
     metronome.onBeat = (idx, accent) => {
       setBeat({ idx, accent });
       setCount((c) => c + 1);
@@ -27,6 +30,7 @@ export function useMetronome() {
     return () => {
       metronome.onStateChange = null;
       metronome.onBeat = null;
+      metronome.onSilentChange = null;
       if (beatTimer.current) clearTimeout(beatTimer.current);
       // Stop on unmount so leaving the practice view (e.g. switching tabs)
       // can't leave the metronome ticking with no visible way to stop it.
@@ -38,6 +42,7 @@ export function useMetronome() {
     running,
     beat,
     count,
+    silent: running && silent,
     // The metronome and ABC playback never run at the same time.
     start: (bpm: number, beats: number) => {
       abcPlayback.stop();
