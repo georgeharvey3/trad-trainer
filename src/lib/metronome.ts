@@ -12,6 +12,8 @@
  *  - every tap on the page nudges the context back to life.
  */
 
+import { endPlaybackSession, startPlaybackSession } from "./audioSession";
+
 type BeatCallback = (beatIdx: number, accent: boolean) => void;
 type StateCallback = (running: boolean) => void;
 
@@ -58,6 +60,8 @@ export class Metronome {
   start(bpm: number, beats: number) {
     this.bpm = bpm;
     this.beats = beats;
+    // Play through the iOS silent switch. Must come before the context starts.
+    startPlaybackSession();
     this.ensureContext();
     this.wake();
     this.beatIdx = 0;
@@ -76,6 +80,7 @@ export class Metronome {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.running = false;
+    endPlaybackSession();
     if (this.wakeLock) {
       void this.wakeLock.release().catch(() => {});
       this.wakeLock = null;
