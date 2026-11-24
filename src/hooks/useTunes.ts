@@ -90,9 +90,15 @@ export function useAddTune() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewTuneInput) => {
+      const row = tuneToRow(freshTuneFields(input));
+      // The database defaults are a tune in the rotation with no learnt bars.
+      // Send these columns only when they differ, so adding a tune you can
+      // play still works on a database without migration 0006.
+      if (row.stage === "rotation") delete row.stage;
+      if (!row.learnt_bars?.length) delete row.learnt_bars;
       const { data, error } = await supabase
         .from("tunes")
-        .insert({ user_id: user!.id, ...tuneToRow(freshTuneFields(input)) })
+        .insert({ user_id: user!.id, ...row })
         .select("*")
         .single();
       if (error) throw error;
