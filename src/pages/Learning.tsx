@@ -72,6 +72,9 @@ function LearningRun({
   const [range, setRange] = useState<BarRange | null>(null);
   const [bars, setBars] = useState<Bar[]>([]);
   const [ready, setReady] = useState(false);
+  // Set when the player backs out of the full-take prompt, so it stops
+  // reappearing just because every bar is learnt.
+  const [dismissed, setDismissed] = useState(false);
   const [recording, setRecording] = useState(false);
   const [loops, setLoops] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +95,7 @@ function LearningRun({
   const total = bars.length;
   const learnt = tune.learntBars;
   const allLearnt = learning && total > 0 && learnt.length >= total;
-  const showReady = learning && (ready || allLearnt || (!abc && !libQ.isLoading));
+  const showReady = learning && (ready || (allLearnt && !dismissed) || (!abc && !libQ.isLoading));
   const loopRange = useMemo(() => range ?? (total ? { from: 1, to: total } : null), [range, total]);
   const loopText = useMemo(() => (abc && bars.length && loopRange ? loopAbc(abc, bars, loopRange) : null), [abc, bars, loopRange]);
 
@@ -164,7 +167,14 @@ function LearningRun({
           <ReadyForTake
             tune={tune}
             total={total}
-            onBack={abc ? () => setReady(false) : undefined}
+            onBack={
+              abc
+                ? () => {
+                    setReady(false);
+                    setDismissed(true);
+                  }
+                : undefined
+            }
             onRecordingChange={setRecording}
             onSaved={(rec) => {
               update.mutate({ id: tune.id, patch: graduateFields(tune.tempo) });
