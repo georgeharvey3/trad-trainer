@@ -329,6 +329,7 @@ function PracticeRun({ tunes, settings, opts, onClose }: { tunes: Tune[]; settin
             ))}
           </div>
           <p className="small mt-sm">Get ready… the tune starts after the count.</p>
+          {metro.silent && <p className="small mt-sm" role="status">No sound? Tap anywhere to turn the click on.</p>}
           <button className="btn btn-quiet push" onClick={() => setPhase("next")}>
             Cancel
           </button>
@@ -419,6 +420,11 @@ function PracticeRun({ tunes, settings, opts, onClose }: { tunes: Tune[]; settin
             {recording ? "Recording" : "Record"}
           </button>
         </div>
+        {metro.silent && (
+          <p className="small center mt-sm" role="status">
+            No sound? Tap anywhere to turn the click on.
+          </p>
+        )}
         {tune.libraryTuneId && <p className="small center mt-sm">Turn the phone sideways for the full sheet music</p>}
         <div className="push pt-lg">
           <button className="done-btn" onClick={done} disabled={recording}>

@@ -10,12 +10,23 @@
  *    which keeps the screen counting even with no sound;
  *  - a stuck context is resumed, and replaced if it stays stuck;
  *  - every tap on the page nudges the context back to life.
+ *
+ * iOS only lets a page start sound during a tap. The practice screen starts
+ * the click from a React effect, after the tap has finished, so:
+ *  - every tap creates and unlocks the context ahead of time, so it is
+ *    already running when the click starts;
+ *  - a new context made outside a tap starts silent on iOS, so we only try
+ *    that once per stall, and after that we wait for the next tap to replace
+ *    it;
+ *  - while there is no sound we say so (onSilentChange), so the screen can
+ *    ask for a tap.
  */
 
 import { endPlaybackSession, startPlaybackSession } from "./audioSession";
 
 type BeatCallback = (beatIdx: number, accent: boolean) => void;
 type StateCallback = (running: boolean) => void;
+type SilentCallback = (silent: boolean) => void;
 
 type Clock = "audio" | "wall";
 
@@ -23,6 +34,8 @@ type Clock = "audio" | "wall";
 const STALL_MS = 250;
 /** How long to wait on a stuck context before throwing it away for a new one. */
 const REPLACE_MS = 1500;
+/** How long with no sound before we tell the screen. */
+const SILENT_MS = 600;
 
 export class Metronome {
   private ctx: AudioContext | null = null;
@@ -36,10 +49,14 @@ export class Metronome {
   private lastAudioMoved = 0;
   private stuckSince = 0;
   private wakeLock: WakeLockSentinel | null = null;
+  /** Tried replacing outside a tap and it didn't help: the next tap must. */
+  private needsTap = false;
+  private silent = false;
 
   running = false;
   onBeat: BeatCallback | null = null;
   onStateChange: StateCallback | null = null;
+  onSilentChange: SilentCallback | null = null;
 
   constructor() {
     if (typeof document === "undefined") return;
@@ -51,8 +68,8 @@ export class Metronome {
     });
     // A tap is a user gesture, which is what iOS wants before it lets audio
     // start again.
-    const unlock = () => this.wake();
-    for (const ev of ["pointerdown", "touchend", "keydown"]) {
+    const unlock = () => this.unlock();
+    for (const ev of ["pointerdown", "touchend", "click", "keydown"]) {
       document.addEventListener(ev, unlock, { capture: true, passive: true });
     }
   }
@@ -68,6 +85,7 @@ export class Metronome {
     this.clock = this.audioLive() ? "audio" : "wall";
     this.lastAudioTime = -1;
     this.stuckSince = 0;
+    this.needsTap = false;
     this.nextTime = this.now() + 0.08;
     if (this.timer) clearInterval(this.timer);
     this.timer = setInterval(() => this.schedule(), 25);
@@ -80,6 +98,7 @@ export class Metronome {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.running = false;
+    this.setSilent(false);
     endPlaybackSession();
     if (this.wakeLock) {
       void this.wakeLock.release().catch(() => {});
@@ -102,6 +121,38 @@ export class Metronome {
       this.ctx = null;
     }
     this.lastAudioTime = -1;
+  }
+
+  /**
+   * Runs inside a tap, the one moment iOS lets audio start. Make sure there
+   * is a context, get it going, and play a silent blip, which is what
+   * actually unlocks sound on iOS.
+   */
+  private unlock() {
+    if (this.needsTap && this.running) {
+      this.needsTap = false;
+      this.stuckSince = 0;
+      this.replaceContext();
+    } else {
+      this.ensureContext();
+      this.wake();
+    }
+    const ctx = this.ctx;
+    if (!ctx) return;
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = ctx.createBuffer(1, 1, 22050);
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch {
+      /* best-effort */
+    }
+  }
+
+  private setSilent(silent: boolean) {
+    if (silent === this.silent) return;
+    this.silent = silent;
+    this.onSilentChange?.(silent);
   }
 
   /** Ask a paused context to carry on. Safe to call often. */
@@ -144,12 +195,18 @@ export class Metronome {
       const wall = performance.now();
       if (!this.stuckSince) this.stuckSince = wall;
       this.wake();
-      if (wall - this.stuckSince > REPLACE_MS) {
+      if (!this.needsTap && wall - this.stuckSince > REPLACE_MS) {
+        // One try outside a tap. If the new one is stuck too, only a tap
+        // will start it.
         this.stuckSince = wall;
+        this.needsTap = true;
         this.replaceContext();
       }
+      if (wall - this.stuckSince > SILENT_MS || this.needsTap) this.setSilent(true);
     } else {
       this.stuckSince = 0;
+      this.needsTap = false;
+      this.setSilent(false);
     }
 
     // Moving between clocks: carry the time to the next beat across so the
